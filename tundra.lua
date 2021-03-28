@@ -1,3 +1,4 @@
+
 Build {
 	Units = "Build/Tundra/units.lua",
 
@@ -11,9 +12,19 @@ Build {
 		{
 			Name = "win64-msvc",
 			DefaultOnHost = "windows",
-			Tools = { "msvc-vs2019" },
+			Tools = { "msvc-vs2019", "ispc" },
             Env = {
+                ISPCOPTS = {
+                    "--target=sse4 --cpu=corei7",
+                    { "--arch=x86-64" },
+                },
+                CPPPATH = {
+                    "$(OBJECTDIR)$(SEP)Source"
+                },
                 CXXOPTS = { "/EHsc" },
+            },
+            ReplaceEnv = {
+                ISPC = "Tools$(SEP)ispc-v1.15.0-windows$(SEP)bin$(SEP)ispc.exe", 
             },
 		},
 	},

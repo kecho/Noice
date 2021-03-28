@@ -1,5 +1,7 @@
+#include <Noice/bluenoise_ispc.h>
+
 int fn()
 {
-    return 99;
+    return (int)sizeof(void*);
 }
 

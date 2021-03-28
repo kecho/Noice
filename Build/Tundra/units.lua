@@ -1,8 +1,10 @@
 require 'tundra.syntax.glob'
 require 'tundra.syntax.files'
+require 'tundra.syntax.ispc'
 local npath = require 'tundra.native.path'
 
 local SourceDir = "Source";
+
 local LibIncludes = {
     SourceDir.."/Noice/Public/"
 }
@@ -21,7 +23,11 @@ StaticLibrary {
             Dir = SourceDir.."/Noice",
             Extensions = { ".cpp", ".h", ".hpp" },
             Recursive =  true
-        }
+        },
+        --ISPC {
+        --    Pass = "CodeGeneration",
+        --    Source =  SourceDir.."/Noice/bluenoise.ispc"
+        --}
     }
 }
 
