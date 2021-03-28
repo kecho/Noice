@@ -1,7 +1,12 @@
 #include <Noice/noisekernels.ispc.h>
 
-int fn()
+float* makeGradient(int w, int h)
 {
-    return (int)sizeof(void*);
+    ispc::Image img;
+    img.width = w;
+    img.height = h;
+    img.data = new float[w*h];
+    ispc::MakeGradient(img);
+    return img.data;
 }
 

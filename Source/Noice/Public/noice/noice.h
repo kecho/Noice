@@ -1,3 +1,3 @@
 #pragma once
 
-int fn();
+float* makeGradient(int w, int h);

@@ -3,7 +3,7 @@
 
 void main()
 {
-    std::cout << fn() << std::endl;
+    makeGradient(512, 512);
 }
 
 
