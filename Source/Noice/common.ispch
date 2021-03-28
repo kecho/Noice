@@ -1,0 +1,67 @@
+#pragma once
+
+typedef uint32<2> uint2;
+typedef int32<2> int2;
+typedef float<2> float2;
+
+inline uint min_u(uint a, uint b)
+{
+	return a < b ? a : b;
+}
+
+inline uint min_i(int a, int b)
+{
+	return a < b ? a : b;
+}
+
+inline int abs_i(int a)
+{
+	return a > 0 ? a : -a;
+}
+
+inline float abs_f(float v)
+{
+	return v > 0 ? v : -v;
+}
+
+inline float dot_f2(float2 a, float2 b)
+{
+    return (a.x*b.x + b.y*a.y);
+}
+
+inline uint2 min_u2(uint2 a, uint2 b)
+{
+	uint2 r = { min_u(a.x,b.x), min_u(a.y, b.y) }; 
+	return r;
+}
+
+inline int2 abs_i2(int2 v)
+{
+	int2 r = { abs_i(v.x), abs_i(v.y) };
+	return r;
+}
+
+inline int2 min_i2(int2 a, int2 b)
+{
+	int2 r = { min_i(a.x,b.x), min_i(a.y, b.y) }; 
+	return r;
+}
+
+inline float fract(float v)
+{
+	return abs_f(v) - (float)(abs_i((int)v));
+}
+
+// LCG values from Numerical Recipes
+inline uint irng(uint rng_state)
+{
+    return 1664525u * rng_state + 1013904223u;
+}
+
+struct Image 
+{
+    uniform int height;
+    uniform int width;
+	uniform float* data;
+};
+

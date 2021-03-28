@@ -1,6 +1,7 @@
 require 'tundra.syntax.glob'
 require 'tundra.syntax.files'
 require 'tundra.syntax.ispc'
+
 local npath = require 'tundra.native.path'
 
 local SourceDir = "Source";
@@ -24,10 +25,11 @@ StaticLibrary {
             Extensions = { ".cpp", ".h", ".hpp" },
             Recursive =  true
         },
-        --ISPC {
-        --    Pass = "CodeGeneration",
-        --    Source =  SourceDir.."/Noice/bluenoise.ispc"
-        --}
+        _G.ISPCGlob(
+            SourceDir.."/Noice",
+            Glob { Dir = SourceDir.."/Noice", Extensions = { ".ispch" }, Recursive = true },
+            "CodeGeneration"
+        )
     }
 }
 

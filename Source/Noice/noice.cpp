@@ -1,4 +1,4 @@
-#include <Noice/bluenoise_ispc.h>
+#include <Noice/noisekernels.ispc.h>
 
 int fn()
 {

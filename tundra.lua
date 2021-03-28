@@ -1,6 +1,9 @@
 
 Build {
-	Units = "Build/Tundra/units.lua",
+    Units = {
+        "Build/Tundra/framework.lua",
+        "Build/Tundra/units.lua"
+    },
 
     Passes = {
         CodeGeneration = { Name = "CodeGeneration" , BuildOrder = 1 },
@@ -8,11 +11,11 @@ Build {
         Deploy = { Name = "Deploy", BuildOrder = 3 }
     },
 
-	Configs = {
-		{
-			Name = "win64-msvc",
-			DefaultOnHost = "windows",
-			Tools = { "msvc-vs2019", "ispc" },
+    Configs = {
+        {
+            Name = "win64-msvc",
+            DefaultOnHost = "windows",
+            Tools = { "msvc-vs2019", "ispc" },
             Env = {
                 ISPCOPTS = {
                     "--target=sse4 --cpu=corei7",
@@ -26,8 +29,8 @@ Build {
             ReplaceEnv = {
                 ISPC = "Tools$(SEP)ispc-v1.15.0-windows$(SEP)bin$(SEP)ispc.exe", 
             },
-		},
-	},
+        },
+    },
     
     Env = {
         GENERATE_PDB = "1"
