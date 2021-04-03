@@ -1,3 +1,3 @@
 #pragma once
 
-float* makeGradient(int w, int h);
+void makeGradient(int w, int h);
