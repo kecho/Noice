@@ -24,7 +24,7 @@ Build {
                 CPPPATH = {
                     "$(OBJECTDIR)$(SEP)Source"
                 },
-                CXXOPTS = { "/EHsc" },
+                CXXOPTS = { "/EHsc", "/MD" },
             },
             ReplaceEnv = {
                 ISPC = "Tools$(SEP)ispc-v1.15.0-windows$(SEP)bin$(SEP)ispc.exe", 

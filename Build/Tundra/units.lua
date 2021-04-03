@@ -12,31 +12,16 @@ local LibIncludes = {
 }
 
 local Libs = {
-    "External/OpenEXR/lib/IlmImf-2_5.lib",
-    "External/OpenEXR/lib/IlmImfUtil-2_5.lib",
-    "External/OpenEXR/lib/Half-2_5.lib",
-    "External/OpenEXR/lib/Imath-2_5.lib",
-    "External/OpenEXR/lib/Iex-2_5.lib",
-    "External/OpenEXR/lib/IexMath-2_5.lib",
-    "External/OpenEXR/lib/IlmThread-2_5.lib",
+    "External/OpenEXR/staticlib/IlmImf-2_5.lib",
+    "External/OpenEXR/staticlib/IlmImfUtil-2_5.lib",
+    "External/OpenEXR/staticlib/Half-2_5.lib",
+    "External/OpenEXR/staticlib/Imath-2_5.lib",
+    "External/OpenEXR/staticlib/Iex-2_5.lib",
+    "External/OpenEXR/staticlib/IexMath-2_5.lib",
+    "External/OpenEXR/staticlib/IlmThread-2_5.lib",
+    "External/Zlib/lib/zlibstatic.lib",
     "Advapi32.lib",
     "User32.lib"
-}
-
-local install2 = Install2 {
-    Name = "DllInstall",
-    Pass = "BuildCode",
-    Sources = {
-        "External/Zlib/bin/zlib.dll",
-        "External/OpenEXR/bin/IlmImf-2_5.dll",
-        "External/OpenEXR/bin/IlmImfUtil-2_5.dll",
-        "External/OpenEXR/bin/Half-2_5.dll",
-        "External/OpenEXR/bin/Imath-2_5.dll",
-        "External/OpenEXR/bin/Iex-2_5.dll",
-        "External/OpenEXR/bin/IexMath-2_5.dll",
-        "External/OpenEXR/bin/IlmThread-2_5.dll"
-    },
-    TargetDir = "$(OBJECTDIR)"
 }
 
 StaticLibrary {
@@ -63,7 +48,7 @@ Program {
     Name = "noice",
     Pass = "BuildCode",
     Includes = LibIncludes,
-    Depends = { "noicelib", install2 },
+    Depends = { "noicelib" },
     Libs = { Libs },
     Sources = {
         Glob {

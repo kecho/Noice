@@ -1,4 +1,3 @@
-#define OPENEXR_DLL
 #include <Noice/noisekernels.ispc.h>
 #include <vector>
 #include <ImfImage.h>
