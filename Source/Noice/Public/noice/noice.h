@@ -1,3 +1,8 @@
 #pragma once
 
-void makeBlueNoise(int w, int h);
+namespace noice
+{
+
+void makeBlueNoise(int w, int h, int threadCount);
+
+}
