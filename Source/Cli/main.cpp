@@ -3,7 +3,7 @@
 
 void main()
 {
-    makeGradient(512, 512);
+    makeBlueNoise(128, 128);
 }
 
 

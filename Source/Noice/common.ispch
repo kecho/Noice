@@ -60,8 +60,8 @@ inline uint irng(uint rng_state)
 
 struct Image 
 {
-    uniform int height;
     uniform int width;
+    uniform int height;
 	uniform float* data;
 };
 

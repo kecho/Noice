@@ -1,3 +1,3 @@
 #pragma once
 
-void makeGradient(int w, int h);
+void makeBlueNoise(int w, int h);
