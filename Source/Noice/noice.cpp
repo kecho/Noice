@@ -193,7 +193,7 @@ void makeBlueNoise(int w, int h, int threadCount)
         s.resize(pixelCount >> 1);
 
     DistanceSearcher searcher(pixelCount, threadCount);
-    KernelRunner<DistanceKernel> distanceKernel(w, h, 32);
+    KernelRunner<DistanceKernel> distanceKernel(w, h, 8);
     distanceKernel.kernel().w = w;
     distanceKernel.kernel().h = h;
 

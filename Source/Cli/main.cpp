@@ -3,12 +3,12 @@
 
 void main()
 {
-    int threadCounts[] = { 16 };
+    int threadCounts[] = { 64 };
     //int threadCounts[] = { 16 };
     for (int& t : threadCounts)
     {
         std::cout << t << " thread: ";
-        noice::makeBlueNoise(512, 512, t);
+        noice::makeBlueNoise(256, 256, t);
         std::cout << std::endl;
     }
 }
