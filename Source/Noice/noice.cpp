@@ -105,6 +105,80 @@ const ispc::BNKPixelScatterState& DistanceSearcher::findMin(ispc::Image& distanc
     return m_tmpScatterStates[selectedOutput][offsetHalf];
 }
 
+static inline int divUp(int a, int b)
+{
+    return (a + b - 1) / b;
+}
+
+template <typename KernelT>
+class KernelRunner
+{
+public:
+    KernelRunner(int w, int h, int subdivision)
+    : m_w(w), m_h(h)
+    {
+        int tileW = divUp(w, subdivision);
+        int tileH = divUp(h, subdivision);
+        for (int tX = 0; tX < subdivision; ++tX) 
+        {
+            for (int tY = 0; tY < subdivision; ++tY)
+            {
+                m_jobContexts.emplace_back();
+                JobContext& jc = m_jobContexts.back();
+                jc.x0 = tX * tileW;
+                jc.x1 = std::min(jc.x0 + tileW, m_w);
+                jc.y0 = tY * tileH;
+                jc.y1 = std::min(jc.y0 + tileH, m_h);
+            }
+        }
+    }
+
+    KernelT& kernel() { return m_kernel; }
+
+    void run(ispc::Image& image)
+    {
+        if ((int)m_jobContexts.size() == 1)
+        {
+            m_kernel(0, 0, m_w, m_h, image);
+            return;
+        }
+
+        std::for_each(std::execution::par, m_jobContexts.begin(), m_jobContexts.end(), [this, &image](JobContext& j) {
+            m_kernel(j.x0, j.y0, j.x1, j.y1, image);
+        });
+    }
+
+private:
+    struct JobContext
+    {
+        int x0;
+        int x1;
+        int y0;
+        int y1;
+        int offset;
+        int size;
+    };
+
+    std::vector<JobContext> m_jobContexts;
+    int m_w;
+    int m_h;
+    KernelT m_kernel;
+};
+
+class DistanceKernel
+{
+public:
+    int pX = 0;
+    int pY = 0;
+    int w = 0;
+    int h = 0;
+    float rho2 = 2.1f;
+    void operator()(int x0, int y0, int x1, int y1, ispc::Image& image)
+    {
+        ispc::BNKDistance(pX, pY, x0, y0, x1, y1, w, h, rho2, image);
+    }
+};
+
 void makeBlueNoise(int w, int h, int threadCount)
 {
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -119,6 +193,9 @@ void makeBlueNoise(int w, int h, int threadCount)
         s.resize(pixelCount >> 1);
 
     DistanceSearcher searcher(pixelCount, threadCount);
+    KernelRunner<DistanceKernel> distanceKernel(w, h, 32);
+    distanceKernel.kernel().w = w;
+    distanceKernel.kernel().h = h;
 
     std::vector<float> distancePixels(w*h, 0.0f);
     ispc::Image distanceImg = { w, h, distancePixels.data() };
@@ -134,7 +211,10 @@ void makeBlueNoise(int w, int h, int threadCount)
         int currX = currentPixel.offset % w;
         int currY = currentPixel.offset / h;
         int selectedOutput = 0;
-        ispc::BNKDistance(currX, currY, w, h, rho2, distanceImg);
+        
+        distanceKernel.kernel().pX = currX;
+        distanceKernel.kernel().pY = currY;
+        distanceKernel.run(distanceImg);
         currentPixel = searcher.findMin(distanceImg);
     }
 

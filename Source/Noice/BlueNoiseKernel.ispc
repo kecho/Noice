@@ -71,16 +71,18 @@ float distanceFunction(int2 dims, float rho2, int2 p0, int2 p1)
 
 export void BNKDistance(
     uniform int pX, uniform int pY,
+    uniform int x0, uniform int y0,
+    uniform int x1, uniform int y1,
     uniform int width, uniform int height,
     uniform float rho2,
     uniform Image& result)
 {
     uniform int2 p = { pX, pY };
     uniform int2 dims = { width, height };
-	for (uniform uint y = 0; y < height; ++y)
+	for (uniform uint y = y0; y < y1; ++y)
 	{
 		float* row = result.data + y*result.width;
-		foreach(x=0...(uint)result.width)
+		foreach(x=x0...x1)
 		{
 			int2 xy = { x, y };
 			row[x] += distanceFunction(dims, rho2, xy, p);
