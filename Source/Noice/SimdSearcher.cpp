@@ -27,7 +27,7 @@ SimdSearcher::SimdSearcher(int pixelCount, int jobCount)
 
 void SimdSearcher::setValidity(const ispc::PixelState& state, bool validity)
 {
-    m_imgScatterState[state.offset].valid = validity ? 1 : 0;
+    m_imgScatterState[ispc::GetOffset(state)] = ispc::MakePixelState(ispc::GetOffset(state), validity ? 1 : 0);
 }
 
 const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg)
@@ -44,13 +44,13 @@ const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg)
     {
         ispc::PixelState& r0 = m_jobContexts[i].result;
         ispc::PixelState& r1 = m_jobContexts[minIndex].result;
-        if (r0.valid && r1.valid)
+        if (ispc::IsValid(r0) && ispc::IsValid(r1))
         {
-            minIndex = distanceImg.data[r0.offset] < distanceImg.data[r1.offset] ? i : minIndex;
+            minIndex = distanceImg.data[ispc::GetOffset(r0)] < distanceImg.data[ispc::GetOffset(r1)] ? i : minIndex;
         }
         else
         {
-            minIndex = r0.valid ? i : minIndex;
+            minIndex = ispc::IsValid(r0) ? i : minIndex;
         }
     }
 

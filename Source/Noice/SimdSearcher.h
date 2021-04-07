@@ -5,7 +5,22 @@
 namespace ispc
 {
     struct Image;
-    struct PixelState;
+    typedef int PixelState;
+
+    inline int MakePixelState(int offset, int valid)
+    {
+        return (offset << 1) | (valid & 0x1);
+    }
+
+    inline int IsValid(PixelState ps)
+    {
+        return ps & 0x1;
+    }
+    
+    inline int GetOffset(PixelState ps)
+    {
+        return ps >> 1;
+    }
 }
 
 namespace noice

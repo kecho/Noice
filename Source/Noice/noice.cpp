@@ -64,10 +64,11 @@ void makeBlueNoise(int w, int h, int threadCount)
     {
         float rank = (float)pixelIt / (float)pixelCount;
         searcher.setValidity(currentPixel, false);
-        pixels[currentPixel.offset] = rank;
+        int offset = ispc::GetOffset(currentPixel);
+        pixels[offset] = rank;
         
-        int currX = currentPixel.offset % w;
-        int currY = currentPixel.offset / h;
+        int currX = offset % w;
+        int currY = offset / h;
         
         distanceKernel.kernel().args(currX, currY);
         distanceKernel.run(distanceImg);

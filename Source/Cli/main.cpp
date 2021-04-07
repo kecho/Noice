@@ -3,8 +3,8 @@
 
 void main()
 {
-    int threadCounts[] = { 64 };
-    //int threadCounts[] = { 16 };
+    //int threadCounts[] = { 64 };
+    int threadCounts[] = { 16 };
     for (int& t : threadCounts)
     {
         std::cout << t << " thread: ";

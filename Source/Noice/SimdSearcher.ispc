@@ -1,10 +1,21 @@
 #include "common.ispch"
 
-struct PixelState
+#define PixelState int
+
+inline int MakePixelState(int offset, int valid)
 {
-    int offset;
-    int valid;
-};
+    return (offset << 1) | (valid & 0x1);
+}
+
+inline int IsValid(PixelState ps)
+{
+    return ps & 0x1;
+}
+
+inline int GetOffset(PixelState ps)
+{
+    return ps >> 1;
+}
 
 export void InitPixelStates(
     uniform PixelState states[],
@@ -12,13 +23,7 @@ export void InitPixelStates(
 {
 	foreach(i=0...counts)
     {
-        PixelState* s = &states[i];
-
-        #pragma ignore warning(perf)
-        s->offset = i;
-
-        #pragma ignore warning(perf)
-        s->valid = 1;
+        states[i] = MakePixelState(i, 1);
     }
 } 
 
@@ -38,25 +43,27 @@ export void SimdFindMax(
     {
         uint oi = ((i + randomNumber) & (outputCount - 1));
         uint si = oi << 1;
-        PixelState* p0 = &inputStates[si + offset0];
-        PixelState* p1 = &inputStates[si + offset1];
+        #pragma ignore warning(perf)
+        PixelState p0 = inputStates[si + offset0];
+        #pragma ignore warning(perf)
+        PixelState p1 = inputStates[si + offset1];
 
         #pragma ignore warning(perf)
-		if (p0->valid == 1 && p1->valid == 1)
+		if (IsValid(p0) == 1 && IsValid(p1) == 1)
 		{
             #pragma ignore warning(perf)
-            float d0 = distanceImg.data[p0->offset];
+            float d0 = distanceImg.data[GetOffset(p0)];
 
             #pragma ignore warning(perf)
-            float d1 = distanceImg.data[p1->offset];
+            float d1 = distanceImg.data[GetOffset(p1)];
 
             #pragma ignore warning(perf)
-			outputStates[oi] = d0 < d1 ? *p0 : *p1;
+			outputStates[oi] = d0 < d1 ? p0 : p1;
 		}
 		else
 		{
             #pragma ignore warning(perf)
-			outputStates[oi] = p0->valid == 1 ? *p0 : *p1;
+			outputStates[oi] = IsValid(p0) == 1 ? p0 : p1;
 		}
     }
 }
