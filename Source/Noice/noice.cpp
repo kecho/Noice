@@ -114,22 +114,18 @@ template <typename KernelT>
 class KernelRunner
 {
 public:
-    KernelRunner(int w, int h, int subdivision)
+    KernelRunner(int w, int h, int threadCount)
     : m_w(w), m_h(h)
     {
-        int tileW = divUp(w, subdivision);
-        int tileH = divUp(h, subdivision);
-        for (int tX = 0; tX < subdivision; ++tX) 
+        int tileH = divUp(h, threadCount);
+        for (int tY = 0; tY < threadCount; ++tY)
         {
-            for (int tY = 0; tY < subdivision; ++tY)
-            {
-                m_jobContexts.emplace_back();
-                JobContext& jc = m_jobContexts.back();
-                jc.x0 = tX * tileW;
-                jc.x1 = std::min(jc.x0 + tileW, m_w);
-                jc.y0 = tY * tileH;
-                jc.y1 = std::min(jc.y0 + tileH, m_h);
-            }
+            m_jobContexts.emplace_back();
+            JobContext& jc = m_jobContexts.back();
+            jc.x0 = 0;
+            jc.x1 = m_w;
+            jc.y0 = tY * tileH;
+            jc.y1 = std::min(jc.y0 + tileH, m_h);
         }
     }
 
@@ -193,7 +189,7 @@ void makeBlueNoise(int w, int h, int threadCount)
         s.resize(pixelCount >> 1);
 
     DistanceSearcher searcher(pixelCount, threadCount);
-    KernelRunner<DistanceKernel> distanceKernel(w, h, 8);
+    KernelRunner<DistanceKernel> distanceKernel(w, h, threadCount);
     distanceKernel.kernel().w = w;
     distanceKernel.kernel().h = h;
 
