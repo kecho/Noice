@@ -29,13 +29,15 @@ namespace noice
 class SimdSearcher
 {
 public:
-    SimdSearcher(int pixelCount, int jobCounts);
+    SimdSearcher(int w, int h, int jobCounts);
 
     const ispc::PixelState& findMin(ispc::Image& distanceImage);
     void setValidity(const ispc::PixelState& state, bool validity);
 
 private:
     const ispc::PixelState& findMin(ispc::Image& distanceImage, int offset, int pixelCount);
+    int m_w;
+    int m_h;
     int m_pixelCount;
     int m_jobCount;
 

@@ -1,20 +1,23 @@
 #include "SimdSearcher.h"
+#include "Utils.h"
 #include <execution>
 
 namespace noice
 {
 
-SimdSearcher::SimdSearcher(int pixelCount, int jobCount)
-: m_imgScatterState(pixelCount)
-, m_pixelCount(pixelCount)
+SimdSearcher::SimdSearcher(int w, int h, int jobCount)
+: m_pixelCount(nextPowOf2(w*h))
+, m_imgScatterState(m_pixelCount)
+, m_w(w)
+, m_h(h)
 , m_jobCount(jobCount)
 {
     for (auto& s : m_tmpScatterStates)
-        s.resize(pixelCount >> 1);
+        s.resize(m_pixelCount >> 1);
 
-    ispc::InitPixelStates(m_imgScatterState.data(), (unsigned)m_imgScatterState.size());
+    ispc::InitPixelStates(m_imgScatterState.data(), (unsigned)m_imgScatterState.size(), (unsigned)m_w, (unsigned)m_h);
 
-    int jobPixelSz = pixelCount / jobCount; 
+    int jobPixelSz = m_pixelCount / jobCount; 
     m_jobContexts.resize(jobCount);
     for (int i = 0; i < jobCount; ++i)
     {

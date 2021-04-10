@@ -51,7 +51,7 @@ void makeBlueNoise(int w, int h, int threadCount)
     for (auto& s : tmpScatterStates)
         s.resize(pixelCount >> 1);
 
-    SimdSearcher searcher(pixelCount, threadCount);
+    SimdSearcher searcher(w, h, threadCount);
     KernelRunner<DistanceKernel> distanceKernel(w, h, threadCount);
     const float rho2= 2.1f * 2.1f;
     distanceKernel.kernel().init(rho2, w, h);
@@ -95,7 +95,6 @@ void makeBlueNoise(int w, int h, int threadCount)
     Imf::RgbaOutputFile file ("testImage.exr", w, h, Imf::WRITE_R);
     file.setFrameBuffer (outputPixels.data(), 1, w);
     file.writePixels(h);
-
 }
 
 }

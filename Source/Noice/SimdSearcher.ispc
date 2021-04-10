@@ -19,11 +19,18 @@ inline int GetOffset(PixelState ps)
 
 export void InitPixelStates(
     uniform PixelState states[],
-    uniform uint counts)
+    uniform uint counts,
+    uniform uint w,
+    uniform uint h)
 {
 	foreach(i=0...counts)
     {
-        states[i] = MakePixelState(i, 1);
+        #pragma ignore warning(perf)
+        uint x = i % w;
+        #pragma ignore warning(perf)
+        uint y = i / w;
+        uint validity = x < w && y < h ? 1 : 0;
+        states[i] = MakePixelState(i, validity);
     }
 } 
 
