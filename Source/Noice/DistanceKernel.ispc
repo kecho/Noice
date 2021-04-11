@@ -1,4 +1,4 @@
-#include "common.ispch"
+#include "Common.ispch"
 
 float distanceFunction(int2 dims, float rho2, int2 p0, int2 p1)
 {
