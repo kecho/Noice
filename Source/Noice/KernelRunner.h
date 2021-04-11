@@ -19,14 +19,21 @@ public:
     : m_w(w), m_h(h)
     {
         int tileH = divUp<int>(h, threadCount);
-        for (int tY = 0; tY < threadCount; ++tY)
+        int yOffset = 0;
+        int heightLeft = h;
+        for (int tY = 0; tY < threadCount && heightLeft > 0; ++tY)
         {
+            int jobSzH = std::min(tileH, heightLeft);
+            heightLeft -= jobSzH;
+
             m_jobContexts.emplace_back();
             JobContext& jc = m_jobContexts.back();
             jc.x0 = 0;
             jc.x1 = m_w;
-            jc.y0 = tY * tileH;
-            jc.y1 = std::min(jc.y0 + tileH, m_h);
+            jc.y0 = yOffset;
+            jc.y1 = jc.y0 + jobSzH;
+
+            yOffset +=jobSzH;
         }
     }
 

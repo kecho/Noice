@@ -8,7 +8,7 @@ void main()
     for (int& t : threadCounts)
     {
         std::cout << t << " thread: ";
-        noice::makeBlueNoise(256, 256, t);
+        noice::makeBlueNoise(59, 45, t);
         std::cout << std::endl;
     }
 }

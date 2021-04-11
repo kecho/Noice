@@ -17,14 +17,19 @@ SimdSearcher::SimdSearcher(int w, int h, int jobCount)
 
     ispc::InitPixelStates(m_imgScatterState.data(), (unsigned)m_imgScatterState.size(), (unsigned)m_w, (unsigned)m_h);
 
-    int jobPixelSz = m_pixelCount / jobCount; 
-    m_jobContexts.resize(jobCount);
-    for (int i = 0; i < jobCount; ++i)
+    int jobPixelSz = divUp<int>(m_pixelCount, jobCount); 
+
+    int offset = 0;
+    int pixelsLeft = m_pixelCount;
+    for (int i = 0; i < jobCount && pixelsLeft > 0; ++i)
     {
-        JobContext& j = m_jobContexts[i];
-        j.offset = i * jobPixelSz;
-        j.size = jobPixelSz;
+        m_jobContexts.emplace_back();
+        JobContext& j = m_jobContexts.back();
+        j.offset = offset;
+        j.size = std::min(jobPixelSz, pixelsLeft);
         j.result = {};
+        offset += j.size;
+        pixelsLeft -= j.size;
     }
 }
 
