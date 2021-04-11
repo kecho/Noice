@@ -8,7 +8,7 @@ float distanceFunction(int2 dims, float rho2, int2 p0, int2 p1)
 	return exp(-zSqr / rho2);
 }
 
-export void BNKDistance(
+export void DistanceKernel(
     uniform int pX, uniform int pY,
     uniform int x0, uniform int y0,
     uniform int x1, uniform int y1,

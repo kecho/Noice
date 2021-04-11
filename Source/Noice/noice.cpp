@@ -1,4 +1,4 @@
-#include <Noice/BlueNoiseKernel.ispc.h>
+#include <Noice/DistanceKernel.ispc.h>
 #include <vector>
 #include <iostream>
 #include <chrono>
@@ -15,7 +15,7 @@ class DistanceKernel
 public:
     inline void operator()(int x0, int y0, int x1, int y1, ispc::Image& image)
     {
-        ispc::BNKDistance(m_pX, m_pY, x0, y0, x1, y1, m_w, m_h, m_rho2, image);
+        ispc::DistanceKernel(m_pX, m_pY, x0, y0, x1, y1, m_w, m_h, m_rho2, image);
     }
 
     inline void init(float rho2, int w, int h)
