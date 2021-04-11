@@ -21,15 +21,19 @@ export void InitPixelStates(
     uniform PixelState states[],
     uniform uint counts,
     uniform uint w,
-    uniform uint h)
+    uniform uint h,
+    uniform uint d)
 {
+    uniform int wh = w*h;
 	foreach(i=0...counts)
     {
         #pragma ignore warning(perf)
         uint x = i % w;
         #pragma ignore warning(perf)
-        uint y = i / w;
-        uint validity = x < w && y < h ? 1 : 0;
+        uint y = (i / w) % h;
+        #pragma ignore warning(perf)
+        uint z = (i / (wh));
+        uint validity = x < w && y < h && z < d ? 1 : 0;
         states[i] = MakePixelState(i, validity);
     }
 } 

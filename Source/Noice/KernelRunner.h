@@ -15,8 +15,8 @@ template <typename KernelT>
 class KernelRunner
 {
 public:
-    KernelRunner(int w, int h, int threadCount)
-    : m_w(w), m_h(h)
+    KernelRunner(int w, int h, int d, int threadCount)
+    : m_w(w), m_h(h), m_d(d)
     {
         int tileH = divUp<int>(h, threadCount);
         int yOffset = 0;
@@ -41,15 +41,18 @@ public:
 
     void run(ispc::Image& image)
     {
-        if ((int)m_jobContexts.size() == 1)
+        for (int d = 0; d < m_d; ++d)
         {
-            m_kernel(0, 0, m_w, m_h, image);
-            return;
-        }
+            if ((int)m_jobContexts.size() == 1)
+            {
+                m_kernel(0, 0, m_w, m_h, d, image);
+                continue;
+            }
 
-        std::for_each(std::execution::par, m_jobContexts.begin(), m_jobContexts.end(), [this, &image](JobContext& j) {
-            m_kernel(j.x0, j.y0, j.x1, j.y1, image);
-        });
+            std::for_each(std::execution::par, m_jobContexts.begin(), m_jobContexts.end(), [this, &d, &image](JobContext& j) {
+                m_kernel(j.x0, j.y0, j.x1, j.y1, d, image);
+            });
+        }
     }
 
 private:
@@ -66,6 +69,7 @@ private:
     std::vector<JobContext> m_jobContexts;
     int m_w;
     int m_h;
+    int m_d;
     KernelT m_kernel;
 };
 

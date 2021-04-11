@@ -3,6 +3,8 @@
 typedef uint32<2> uint2;
 typedef int32<2> int2;
 typedef float<2> float2;
+typedef int32<3> int3;
+typedef float<3> float3;
 
 inline uint min_u(uint a, uint b)
 {
@@ -40,6 +42,11 @@ inline float dot_f2(float2 a, float2 b)
     return (a.x*b.x + b.y*a.y);
 }
 
+inline float dot_f3(float3 a, float3 b)
+{
+    return (a.x*b.x + b.y*a.y + a.z*b.z);
+}
+
 inline uint2 min_u2(uint2 a, uint2 b)
 {
 	uint2 r = { min_u(a.x,b.x), min_u(a.y, b.y) }; 
@@ -58,9 +65,21 @@ inline int2 abs_i2(int2 v)
 	return r;
 }
 
+inline int3 abs_i3(int3 v)
+{
+	int3 r = { abs_i(v.x), abs_i(v.y), abs_i(v.z) };
+	return r;
+}
+
 inline int2 min_i2(int2 a, int2 b)
 {
 	int2 r = { min_i(a.x,b.x), min_i(a.y, b.y) }; 
+	return r;
+}
+
+inline int3 min_i3(int3 a, int3 b)
+{
+	int3 r = { min_i(a.x,b.x), min_i(a.y, b.y), min_i(a.z, b.z) }; 
 	return r;
 }
 
@@ -79,6 +98,7 @@ struct Image
 {
     uniform int width;
     uniform int height;
+    uniform int depth;
 	uniform float* data;
 };
 

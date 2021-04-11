@@ -5,17 +5,18 @@
 namespace noice
 {
 
-SimdSearcher::SimdSearcher(int w, int h, int jobCount)
-: m_pixelCount(nextPowOf2(w*h))
+SimdSearcher::SimdSearcher(int w, int h, int d, unsigned randomSeed, int jobCount)
+: m_pixelCount(nextPowOf2(w*h*d))
 , m_imgScatterState(m_pixelCount)
 , m_w(w)
 , m_h(h)
+, m_d(d)
 , m_jobCount(jobCount)
 {
     for (auto& s : m_tmpScatterStates)
         s.resize(m_pixelCount >> 1);
 
-    ispc::InitPixelStates(m_imgScatterState.data(), (unsigned)m_imgScatterState.size(), (unsigned)m_w, (unsigned)m_h);
+    ispc::InitPixelStates(m_imgScatterState.data(), (unsigned)m_imgScatterState.size(), (unsigned)m_w, (unsigned)m_h, (unsigned)m_d);
 
     int jobPixelSz = divUp<int>(m_pixelCount, jobCount); 
 
@@ -26,6 +27,7 @@ SimdSearcher::SimdSearcher(int w, int h, int jobCount)
         m_jobContexts.emplace_back();
         JobContext& j = m_jobContexts.back();
         j.offset = offset;
+        j.rand = RandomFunction(randomSeed + i);
         j.size = std::min(jobPixelSz, pixelsLeft);
         j.result = {};
         offset += j.size;
@@ -41,10 +43,10 @@ void SimdSearcher::setValidity(const ispc::PixelState& state, bool validity)
 const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg)
 {
     if (m_jobContexts.size() == 1)
-        return findMin(distanceImg, 0, m_pixelCount);
+        return findMin(distanceImg, m_jobContexts[0].rand, 0, m_pixelCount);
 
     std::for_each(std::execution::par, m_jobContexts.begin(), m_jobContexts.end(), [this, &distanceImg](JobContext& j) {
-        j.result = findMin(distanceImg, j.offset, j.size);
+        j.result = findMin(distanceImg, j.rand, j.offset, j.size);
     });
 
     int minIndex = 0;
@@ -66,7 +68,7 @@ const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg)
     
 }
 
-const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg, int offset, int pixelCount)
+const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg, SimdSearcher::RandomFunction& rand, int offset, int pixelCount)
 {
     int offsetHalf = offset >> 1;
     int selectedOutput = 0;
@@ -75,9 +77,9 @@ const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg, int offs
         selectedOutput = (mipIt + 1) & 0x1;
         ispc::PixelState* inputState = mipIt == 0 ? m_imgScatterState.data() + offset : m_tmpScatterStates[mipIt & 0x1].data() + offsetHalf;
         ispc::PixelState* outputState = m_tmpScatterStates[selectedOutput].data() + offsetHalf;
-        int randVal = std::rand();
+        unsigned randVal = rand();
         ispc::SimdFindMax(
-            distanceImg, (unsigned)randVal, mipPixelCount, inputState, outputState);
+            distanceImg, randVal, mipPixelCount, inputState, outputState);
     } 
     
     return m_tmpScatterStates[selectedOutput][offsetHalf];

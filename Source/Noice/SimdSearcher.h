@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <random>
 #include <Noice/SimdSearcher.ispc.h>
 
 namespace ispc
@@ -29,15 +30,19 @@ namespace noice
 class SimdSearcher
 {
 public:
-    SimdSearcher(int w, int h, int jobCounts);
+    SimdSearcher(int w, int h, int d, unsigned seed, int jobCounts);
 
     const ispc::PixelState& findMin(ispc::Image& distanceImage);
     void setValidity(const ispc::PixelState& state, bool validity);
 
 private:
-    const ispc::PixelState& findMin(ispc::Image& distanceImage, int offset, int pixelCount);
+
+    using RandomFunction = std::mt19937;
+
+    const ispc::PixelState& findMin(ispc::Image& distanceImage, RandomFunction& rand, int offset, int pixelCount);
     int m_w;
     int m_h;
+    int m_d;
     int m_pixelCount;
     int m_jobCount;
 
@@ -45,6 +50,7 @@ private:
     {
         int offset;
         int size;
+        RandomFunction rand;
         ispc::PixelState result;
     };
 
