@@ -14,6 +14,11 @@ inline uint min_i(int a, int b)
 	return a < b ? a : b;
 }
 
+inline float min_f(float a, float b)
+{
+	return a < b ? a : b;
+}
+
 inline int abs_i(int a)
 {
 	return a > 0 ? a : -a;
@@ -24,6 +29,12 @@ inline float abs_f(float v)
 	return v > 0 ? v : -v;
 }
 
+inline float2 abs_f2(float2 v)
+{
+	float2 ans = { v.x > 0 ? v.x : -v.x, v.y > 0 ? v.y : -v.y };
+    return ans;
+}
+
 inline float dot_f2(float2 a, float2 b)
 {
     return (a.x*b.x + b.y*a.y);
@@ -32,6 +43,12 @@ inline float dot_f2(float2 a, float2 b)
 inline uint2 min_u2(uint2 a, uint2 b)
 {
 	uint2 r = { min_u(a.x,b.x), min_u(a.y, b.y) }; 
+	return r;
+}
+
+inline float2 min_f2(float2 a, float2 b)
+{
+	float2 r = { min_f(a.x,b.x), min_f(a.y, b.y) }; 
 	return r;
 }
 

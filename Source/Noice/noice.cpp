@@ -68,7 +68,7 @@ void makeBlueNoise(int w, int h, int threadCount)
         pixels[offset] = rank;
         
         int currX = offset % w;
-        int currY = offset / h;
+        int currY = offset / w;
         
         distanceKernel.kernel().args(currX, currY);
         distanceKernel.run(distanceImg);
