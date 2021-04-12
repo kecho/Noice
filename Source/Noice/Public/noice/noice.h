@@ -21,6 +21,7 @@ struct BlueNoiseGenDesc
 enum class Error
 {
     Ok,
+    BadArgs,
     IoIssue
 };
 

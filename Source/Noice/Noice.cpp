@@ -1,15 +1,26 @@
 #include <noice/noice.h>
-#include "BlueNoiseGenerator.h"
+#include <iostream>
+#include <chrono>
 #include "Image.h"
-#include <ImfImage.h>
-#include <ImfRgbaFile.h>
-#include <ImfOutputFile.h>
-#include "KernelRunner.h"
-#include "SimdSearcher.h"
+#include "BlueNoiseGenerator.h"
+#include "ImageStream.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <io.h>
 
 
 namespace noice
 {
+
+class SR : public OutputStream
+{
+public:
+    SR() { setmode(fileno(stdout), O_BINARY); }
+    virtual void write(const char* buffer, int bufferSize)
+    {
+        ::write(::fileno(stdout), buffer, bufferSize);
+    }
+};
 
 void makeBlueNoise(int w, int h, int d, int threadCount)
 {
@@ -23,9 +34,15 @@ void makeBlueNoise(int w, int h, int d, int threadCount)
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto ms_result = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-    std::cout << "Duration: " << ms_result.count() << " ms " << std::endl;
+    //std::cout << "Duration: " << ms_result.count() << " ms " << std::endl;
 
     //////////////////////
+    Channel r = { &outputImage };
+    Channel g = { &outputImage };
+    const Channel* rgba[4] = { &r, &g, nullptr, nullptr };
+    SR sr;
+    streamOutImage("testImage.exr",
+        sr, desc.width, desc.height, desc.depth, rgba);
 
     #if 0
     ispc::Image img;
@@ -39,6 +56,7 @@ void makeBlueNoise(int w, int h, int d, int threadCount)
     file.writePixels(h);
     #else
 
+/*
     int scanLines = h * d;
     Imf::Header header(w, scanLines);
     header.channels().insert("R", Imf::Channel(Imf::FLOAT));    
@@ -54,6 +72,7 @@ void makeBlueNoise(int w, int h, int d, int threadCount)
     } catch (const std::exception& exc) {
         std::cout << exc.what() << std::endl;
     }
+*/
     
     #endif
 }
