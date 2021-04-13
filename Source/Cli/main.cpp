@@ -3,7 +3,6 @@
 
 void main()
 {
-    //int threadCounts[] = { 64 };
     noice::BlueNoiseGenDesc desc;
     desc.width = 256;
     desc.height = 256;
@@ -15,10 +14,11 @@ void main()
         return;
     }
 
-    const noice::TextureComponentHandle* components[4] = {};
-    components[0] = &bluenoise;
-    components[1] = &bluenoise;
-    err = noice::saveTextureToFile(components, "outputTex.exr");
+    noice::TextureFileDesc texDesc = {};
+    texDesc.filename = "outputTex.exr";
+    texDesc.channels[0] = &bluenoise;
+    texDesc.channels[1] = &bluenoise;
+    err = noice::saveTextureToFile(texDesc);
     if (err != noice::Error::Ok)
     {
         std::cerr << "io error" << (int)err << std::endl;

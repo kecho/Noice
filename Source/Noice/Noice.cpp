@@ -66,8 +66,17 @@ Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureCo
     return blueNoiseGenerator(desc, threadCount, *img);
 }
 
-Error saveTextureToStream(const TextureComponentHandle* channels[(int)Channels::Count], const char* filename, OutputStream& outStream)
+static bool isValidFileName(const TextureFileDesc& desc)
 {
+    if (desc.filename == nullptr || desc.filename[0] == '\0')
+        return false;
+}
+
+Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream)
+{
+    if (isValidFileName(desc))
+        return Error::InvalidFileName;
+
     Channel rgbaContent[4];
     const Channel* rgbaArgs[4] = { nullptr };
     int width  = -1;
@@ -75,7 +84,7 @@ Error saveTextureToStream(const TextureComponentHandle* channels[(int)Channels::
     int depth  = -1;
     for (int c = 0; c < (int)Channels::Count; ++c)
     {
-        const TextureComponentHandle* component = channels[c];
+        const TextureComponentHandle* component = desc.channels[c];
         if (component == nullptr || component->opaquePtr == 0)
             continue;
 
@@ -97,16 +106,19 @@ Error saveTextureToStream(const TextureComponentHandle* channels[(int)Channels::
     if (width == -1)
         return Error::NoInputImageSpecified;
 
-    return streamOutImage(filename,
+    return streamOutImage(desc.filename,
             outStream, width, height, depth, rgbaArgs);
 }
 
-Error saveTextureToFile(const TextureComponentHandle* channels[(int)Channels::Count], const char* filename)
+Error saveTextureToFile(const TextureFileDesc& desc)
 {
-    FileStreamOut fileStream(filename);
+    if (isValidFileName(desc))
+        return Error::InvalidFileName;
+        
+    FileStreamOut fileStream(desc.filename);
     if (!fileStream.open())
         return Error::CantOpenFile;
-    Error err = saveTextureToStream(channels, filename, fileStream);
+    Error err = saveTextureToStream(desc, fileStream);
     fileStream.close();
     return err;
 }

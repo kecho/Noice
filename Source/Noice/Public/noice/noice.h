@@ -18,6 +18,7 @@ enum class Error
     OpaqueNotNull,
     InconsistentDimensions,
     NoInputImageSpecified,
+    InvalidFileName,
     IoIssue
 };
 
@@ -40,9 +41,15 @@ struct BlueNoiseGenDesc
     unsigned seed = 0xdeadbeef;
 };
 
+struct TextureFileDesc
+{
+    const char* filename = nullptr;
+    const TextureComponentHandle* channels[4] = {};
+};
+
 Error generateBlueNoise  (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle* component);
-Error saveTextureToFile  (const TextureComponentHandle* channels[(int)Channels::Count], const char* filename);
-Error saveTextureToStream(const TextureComponentHandle* channels[(int)Channels::Count], const char* filename, OutputStream& outStream);
+Error saveTextureToFile  (const TextureFileDesc& desc);
+Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream);
 
 void deleteComponent(TextureComponentHandle* component);
 
