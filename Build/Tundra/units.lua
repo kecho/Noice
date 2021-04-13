@@ -60,3 +60,20 @@ Program {
 }
 
 Default("noice")
+
+Program {
+    Name = "noice_tests",
+    Pass = "BuildCode",
+    Includes = { LibIncludes, SourceDir },
+    Depends = { "noicelib" },
+    Libs = { Libs },
+    Sources = {
+        Glob {
+            Dir = SourceDir.."/Test",
+            Extensions = { ".cpp", ".h" },
+            Recursive = true
+        }
+    }
+}
+
+Default("noice_tests")
