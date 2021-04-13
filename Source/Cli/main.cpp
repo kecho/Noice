@@ -1,8 +1,12 @@
 #include <noice/noice.h>
+#include "ClParser.h"
 #include <iostream>
 
-void main()
+void main(int argc, char* argv[])
 {
+    noice::ClParser parser;
+    parser.printTokens(argc, argv);
+#if 0
     noice::BlueNoiseGenDesc desc;
     desc.width = 256;
     desc.height = 256;
@@ -28,5 +32,6 @@ void main()
     deleteComponent(&bluenoise);
 
     std::cout << "Success." << std::endl;
+#endif
 }
 

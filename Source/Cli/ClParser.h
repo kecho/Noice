@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
+#include "ClTokenizer.h"
 
 namespace noice
 {
@@ -17,17 +18,12 @@ public:
     using ParamCallback = std::function<void(const ParamData&, GroupId, void*)>;
     using OnErrorCallback = std::function<void(const std::string&)>;
 
-    enum class ParamType
-    {
-        Float, Uint, Int, String, Bool, Enum
-    };
-
     struct ParamData
     {
         std::string description;
         std::string shortName;
         std::string longName;
-        ParamType type;
+        CliParamType type;
         uint64_t offset;
         std::vector<std::string> enumNames;
         ParamCallback onSet;
@@ -45,8 +41,9 @@ public:
     GroupId createGroup(const char* name);
     bool addParam(GroupId gid, const ParamData& param);
     void bind(GroupId gid, void* object);
-    void setOnErrorCallback(OnErrorCallback cb) { m_onError = cb };
-    bool parse(int argc, const char* argv[]);
+    void setOnErrorCallback(OnErrorCallback cb) { m_onError = cb; }
+    bool parse(int argc, char* argv[]);
+    void printTokens(int argc, char* argv[]);
 
 private:
     struct Schema

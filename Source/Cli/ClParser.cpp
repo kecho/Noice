@@ -1,4 +1,7 @@
 #include "ClParser.h"
+#include <variant>
+#include <iostream>
+
 
 namespace noice
 {
@@ -39,8 +42,56 @@ bool ClParser::addParam(ClParser::GroupId gid, const ClParser::ParamData& param)
     return true;
 }
 
-bool ClParser::parse(int argc, const char* argv[])
+void ClParser::printTokens(int argc, char* argv[])
 {
+    ClTokenizer tokenizer;
+    tokenizer.init(argc, argv);
+
+    ClTokenizer::Result tokResult = ClTokenizer::Result::Success;
+    while(tokResult == ClTokenizer::Result::Success)
+    {
+        ClTokenizer::Token token;
+        tokResult = tokenizer.next(token);
+        if (tokResult == ClTokenizer::Result::End)
+            break;
+
+        if (tokResult != ClTokenizer::Result::Success)
+        {
+            std::cout << "Error in tokenizer " << (int)tokResult;
+            break;
+        }
+
+        if (auto imm = std::get_if<ClTokenizer::Imm>(&token))
+        {
+            switch (imm->type)
+            {
+            case CliParamType::Int:
+                std::cout << imm->scalar.i << " ";
+                break;
+            case CliParamType::Bool:
+                std::cout << (imm->scalar.b ? "true" : "false") << " ";
+                break;
+            case CliParamType::String:
+                std::cout << "\"" << imm->strValue << "\"" << " ";
+                break;
+            }
+        }
+        else if (auto name = std::get_if<ClTokenizer::Name>(&token))
+        {
+            std::cout << (name->isShortParam ? "-" : "--") << name->name << " ";
+        }
+        else if (auto name = std::get_if<ClTokenizer::Equal>(&token))
+        {
+            std::cout << "= ";
+        }
+    }
+
+    std::cout << std::endl;
+}
+    
+bool ClParser::parse(int argc, char* argv[])
+{
+#if 0
     enum class States { PARAM, VALUE };
     States s = States::PARAM;
     ParamLoc paramLoc = {};
@@ -109,6 +160,9 @@ bool ClParser::parse(int argc, const char* argv[])
     }
 
     return true;
+#else
+    return true;
+#endif
 }
 
 }
