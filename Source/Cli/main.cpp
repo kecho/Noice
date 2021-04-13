@@ -1,4 +1,4 @@
-#include <Noice/noice.h>
+#include <noice/noice.h>
 #include <iostream>
 
 void main()
