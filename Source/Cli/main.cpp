@@ -4,12 +4,29 @@
 void main()
 {
     //int threadCounts[] = { 64 };
-    int threadCounts[] = { 16 };
-    for (int& t : threadCounts)
+    noice::BlueNoiseGenDesc desc;
+    desc.width = 256;
+    desc.height = 256;
+    noice::TextureComponentHandle bluenoise;
+    noice::Error err = noice::generateBlueNoise(desc, 16, &bluenoise);
+    if (err != noice::Error::Ok)
     {
-        //std::cout << t << " thread: ";
-        noice::makeBlueNoise(32, 32, 32, t);
-        //std::cout << std::endl;
+        std::cerr << "error: " << (int)err << std::endl;
+        return;
     }
+
+    const noice::TextureComponentHandle* components[4] = {};
+    components[0] = &bluenoise;
+    components[1] = &bluenoise;
+    err = noice::saveTextureToFile(components, "outputTex.exr");
+    if (err != noice::Error::Ok)
+    {
+        std::cerr << "io error" << (int)err << std::endl;
+        return;
+    }
+
+    deleteComponent(&bluenoise);
+
+    std::cout << "Success." << std::endl;
 }
 

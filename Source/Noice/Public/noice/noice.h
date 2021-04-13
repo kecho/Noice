@@ -9,6 +9,28 @@ public:
     virtual void write(const char* buffer, int bufferSize) = 0;
 };
 
+enum class Error
+{
+    Ok,
+    BadArgs,
+    CantOpenFile,
+    HandleIsNull,
+    OpaqueNotNull,
+    InconsistentDimensions,
+    NoInputImageSpecified,
+    IoIssue
+};
+
+struct TextureComponentHandle
+{
+    void* opaquePtr = 0;
+};
+
+enum class Channels
+{
+    R, G, B, A, Count
+};
+
 struct BlueNoiseGenDesc
 {
     int width  = 64;
@@ -18,23 +40,10 @@ struct BlueNoiseGenDesc
     unsigned seed = 0xdeadbeef;
 };
 
-enum class Error
-{
-    Ok,
-    BadArgs,
-    IoIssue
-};
+Error generateBlueNoise  (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle* component);
+Error saveTextureToFile  (const TextureComponentHandle* channels[(int)Channels::Count], const char* filename);
+Error saveTextureToStream(const TextureComponentHandle* channels[(int)Channels::Count], const char* filename, OutputStream& outStream);
 
-Error blueNoise(
-    const char* fileName,
-    const BlueNoiseGenDesc& desc,
-    int threadCount);
-
-Error blueNoise(
-    OutputStream& outStream,
-    const BlueNoiseGenDesc& desc,
-    int threadCount);
-
-void makeBlueNoise(int w, int h, int d, int threadCount);
+void deleteComponent(TextureComponentHandle* component);
 
 }

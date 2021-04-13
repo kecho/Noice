@@ -18,7 +18,6 @@ Error streamOutImage(
     OutputStream& output,
     int width, int height, int depth,
     const Channel* rgba[4]);
-    
 
 
 }
