@@ -21,13 +21,16 @@ bool parseInteger(const std::string& p, int& output, int& charsParsed)
         multiplier = -1;
         ++s;
     }
+
+    if (!isDigit(*s))
+        return false;
     
     int number = 0;
     while (*s && s != nullptr)
     {
         char digit = *s;
         if (!isDigit(digit))
-            return false;
+            break;
 
         int d = digit - '0';
         number *= 10;
@@ -65,7 +68,8 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
     if (m_index >= m_argc)
         return Result::End;
 
-    const char* str = m_argv[m_index] + m_strOffset;
+    const char* origin = m_argv[m_index] + m_strOffset;
+    const char* str = origin;
     std::string clStr = str;
 
     if (clStr.size() == 0)
@@ -76,7 +80,7 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
     if (clStr.size() <= 1 && dashes >= 1)
         return Result::ErrorMissingParamName;
 
-    dashes += clStr[1] == '-' ? 1 : 0;
+    dashes += dashes > 0 && clStr[1] == '-' ? 1 : 0;
 
     if (clStr.size() <= 2 && dashes >= 2)
         return Result::ErrorMissingParamName;
@@ -85,13 +89,11 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
     if (isParam)
     {
         str += dashes;
-        m_strOffset += dashes;
         Name nm;
         nm.isShortParam = dashes == 1;
         if (nm.isShortParam)
         {
             char c = *(str++);
-            ++m_strOffset;
             nm.name = c;
         }
         else
@@ -100,18 +102,14 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
             while (*str != '\0' &&  *str != '=')
             {
                 nm.name += *(str++);
-                ++m_strOffset;
             }
         }
 
         outToken = nm;
-        clStr = str;
     }
     else if (*str == '=')
     {
         ++str;
-        ++m_strOffset;
-        clStr = str;
         outToken = Equal{ 0 };
     }
     else
@@ -138,9 +136,11 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
         }
 
         outToken = imm;
-        m_strOffset += charsParsed;
-        clStr = str + charsParsed;
+        str += charsParsed;
     }
+
+    m_strOffset += (str - origin);
+    clStr = str;
 
     if (clStr.size() == 0)
     {
