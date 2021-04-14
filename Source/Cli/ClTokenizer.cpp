@@ -12,13 +12,15 @@ bool isDigit(char digit)
     return digit >= '0' && digit <= '9';
 }
 
-bool parseInteger(const std::string& p, int& output, int& charsParsed)
+bool parseInteger(const std::string& p, int& output, bool& hasSign, int& charsParsed)
 {
+    hasSign = false;
     charsParsed = 0;
     const char* s = p.c_str();
     int multiplier = 1;
     if (*s == '-')
     {
+        hasSign = true;
         multiplier = -1;
         ++s;
     }
@@ -73,6 +75,9 @@ std::string ClTokenizer::toString(const ClTokenizer::Token& t)
         case CliParamType::Int:
             ss << imm->scalar.i;
             break;
+        case CliParamType::Uint:
+            ss << imm->scalar.u;
+            break;
         case CliParamType::Bool:
             ss << (imm->scalar.b ? "true" : "false");
             break;
@@ -100,6 +105,8 @@ const char* ClTokenizer::toString(CliParamType type)
 {
     switch (type)
     {
+    case CliParamType::Uint:
+        return "Uint";
     case CliParamType::Int:
         return "Int";
     case CliParamType::Bool:
@@ -162,10 +169,11 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
     else
     {
         Imm imm;
+        imm.hasSign = false;
         int intVal = 0;
         bool boolVal = 0;
         int charsParsed = 0;
-        if (parseInteger(clStr, intVal, charsParsed))
+        if (parseInteger(clStr, intVal, imm.hasSign, charsParsed))
         {
             imm.type = CliParamType::Int;
             imm.scalar.i = intVal;

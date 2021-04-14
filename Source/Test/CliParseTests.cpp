@@ -173,7 +173,7 @@ bool cliGrammar0()
         paramsV.push_back(p);
 
     ClParser parser;
-    ClParser::GroupId rootId = parser.createGroup("root");
+    ClParser::GroupId rootId = parser.createGroup("root", "");
     parser.addParam(rootId, ClParser::ParamData(
         "",
         "i",

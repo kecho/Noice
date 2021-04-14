@@ -5,6 +5,7 @@
 #include <functional>
 #include <unordered_map>
 #include <memory>
+#include <iostream>
 #include "ClTokenizer.h"
 
 namespace noice
@@ -67,18 +68,24 @@ public:
     {
         GroupId groupId = -1;
         std::string name;
+        std::string description;
         std::vector<ParamData> params;
     };
 
     ClParser() {}
 
-    GroupId createGroup(const char* name);
+    GroupId createGroup(const char* name, const char* description);
+
+    const Group& group(GroupId gid) const { return m_schema.groups[gid]; }
+    int groupCounts() const { return m_schema.groups.size(); }
+
     bool addParam(GroupId gid, ParamData param);
     void bind(GroupId gid, void* object);
     void setOnErrorCallback(OnErrorCallback cb) { m_onError = cb; }
     bool parse(int argc, char* argv[]);
     void printTokens(int argc, char* argv[]);
     const char* appPath() const { return m_appPath.c_str(); }
+    void prettyPrintHelp();
 
 private:
     struct Schema

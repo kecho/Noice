@@ -1,13 +1,14 @@
 #include "ClParser.h"
 #include <variant>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 
 
 namespace noice
 {
 
-ClParser::GroupId ClParser::createGroup(const char* name)
+ClParser::GroupId ClParser::createGroup(const char* name, const char* description)
 {
     GroupId gid = m_schema.groups.size();
     m_groupBinds.emplace_back();
@@ -16,6 +17,7 @@ ClParser::GroupId ClParser::createGroup(const char* name)
     Group& g = m_schema.groups.back();
     g.groupId = gid;
     g.name = name;
+    g.description = description;
     return gid;
 }
 
@@ -74,6 +76,9 @@ void ClParser::printTokens(int argc, char* argv[])
             switch (imm->type)
             {
             case CliParamType::Int:
+                std::cout << imm->scalar.u << " ";
+                break;
+            case CliParamType::Uint:
                 std::cout << imm->scalar.i << " ";
                 break;
             case CliParamType::Bool:
@@ -168,12 +173,30 @@ bool ClParser::parse(int argc, char* argv[])
                 std::stringstream ss;
                 ss << "Expected a parameter name. Found '" << ClTokenizer::toString(t) << "' instead.";
                 reportErrorStr(ss.str());
+                return false;
             }
 
             if (!parseParamName(*name, currentParamLoc))
                 return false;
 
             state = State::ParamValue;
+            result = tokenizer.next(t);
+
+            if (result == ClTokenizer::Result::Success || result == ClTokenizer::Result::End)
+            {
+                Group& group = m_schema.groups[currentParamLoc.gid];
+                ParamData& paramType = group.params[currentParamLoc.paramIndex];
+                if (paramType.type == CliParamType::Bool && std::get_if<ClTokenizer::Name>(&t) != nullptr)
+                {
+                    ClTokenizer::Imm imm;
+                    imm.type = CliParamType::Bool;
+                    imm.scalar.b = true;
+                    if (!parseParamValue(currentParamLoc, imm))
+                        return false;
+
+                    state = State::ParamName;
+                }
+            }
         }
         else if (state == State::ParamValue)
         {
@@ -196,9 +219,19 @@ bool ClParser::parse(int argc, char* argv[])
             }
 
             state = State::ParamName;
+            result = tokenizer.next(t);
+            continue;
         }
+    }
 
-        result = tokenizer.next(t);
+    if (state == State::ParamValue)
+    {
+        Group& group = m_schema.groups[currentParamLoc.gid];
+        ParamData& paramType = group.params[currentParamLoc.paramIndex];
+        std::stringstream ss;
+        ss << "Missing argument for parameter: " << paramType.longName << "(" << paramType.shortName << ") .";
+        reportErrorStr(ss.str());
+        return false;
     }
 
     return true;
@@ -238,7 +271,12 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
     char* obj = (char*)m_groupBinds[loc.gid];
     Group& group = m_schema.groups[loc.gid];
     ParamData& paramType = group.params[loc.paramIndex];
-    if (paramType.type != value.type)
+
+    const bool valueIsInt   = value.type == CliParamType::Uint || value.type == CliParamType::Int;
+    const bool requestIsUnsigned = paramType.type == CliParamType::Uint;
+    const bool valHasSign = value.type == CliParamType::Int && value.hasSign;
+    const bool compatibleTypes = paramType.type == value.type || (requestIsUnsigned && (valueIsInt && !valHasSign));
+    if (!compatibleTypes)
     {
         std::stringstream ss;
         ss << "Parameter " << paramType.longName << " ("
@@ -266,7 +304,7 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
         if (!found)
         {
             std::stringstream ss;
-            ss << "Parameter " << paramType.longName << " (" << paramType.shortName << ") must contain one of the following values: ";
+            ss << "Parameter " << paramType.longName << " (" << paramType.shortName << ") with value '" << value.strValue << "' must contain one of the following values: ";
             for (int i = 0; i < paramType.enumNames.size(); ++i)
                 ss  << "\'" << paramType.enumNames[i] << "'"
                     << (i != (paramType.enumNames.size() - 1) ? "," : "");
@@ -291,6 +329,7 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
         }
         break;
     case CliParamType::Int:
+    case CliParamType::Uint:
         {
             resultPtr = &value.scalar.i;
             if (obj)
@@ -310,6 +349,28 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
         paramType.onSet(paramType, loc.gid, resultPtr);
 
     return true;
+}
+
+void ClParser::prettyPrintHelp()
+{
+    for (const auto& g : m_schema.groups)
+    {
+        std::cout << g.description << std::endl << std::endl;
+        for (const auto& p : g.params)
+        {
+            std::cout << std::setw(4) << "-" << p.shortName << ", --"  << p.longName << " (" << ClTokenizer::toString(p.type) << ")" << std::endl;
+            std::cout << "\t" << p.description << std::endl;
+            if (p.type == CliParamType::String && !p.enumNames.empty())
+            {
+                std::cout << "\t" << "Possible values:  " << std::endl << "\t";
+                for (int e = 0; e < (int)p.enumNames.size(); ++e)
+                {
+                    std::cout << p.enumNames[e] << (e != ((int)p.enumNames.size() - 1) ? ", " : "" );
+                }
+            }
+            std::cout << std::endl << std::endl;
+        }
+    }
 }
 
 }

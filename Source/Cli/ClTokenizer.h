@@ -8,7 +8,7 @@ namespace noice
 
 enum class CliParamType
 {
-    Int, Bool, String
+    Uint, Int, Bool, String
 };
 
 class ClTokenizer
@@ -18,8 +18,10 @@ public:
     struct Imm
     {
         CliParamType type;
+        bool hasSign;
         std::string strValue;
         union {
+            unsigned u;
             int i;
             bool b;
         } scalar;
