@@ -19,7 +19,6 @@ TestCase g_testRegistry [] = {
     { "Cli Tokenization 1", noice::cliTokenizer1 },
 };
 
-
 int main(int argc, char* argv[])
 {
     int fails = 0;

@@ -1,6 +1,7 @@
 #include "ClParser.h"
 #include <variant>
 #include <iostream>
+#include <sstream>
 
 
 namespace noice
@@ -89,80 +90,151 @@ void ClParser::printTokens(int argc, char* argv[])
     std::cout << std::endl;
 }
     
-bool ClParser::parse(int argc, char* argv[])
+void ClParser::reportError(const char* msg) const
 {
-#if 0
-    enum class States { PARAM, VALUE };
-    States s = States::PARAM;
-    ParamLoc paramLoc = {};
-    auto errCb = [this](const std::string& msg)
-    {
-        if (m_onError == nullptr)
-            return;
-        m_onError(msg);
-    };
-    auto errCbStr = [this](const char* msg)
-    {
-        if (m_onError == nullptr)
-            return;
-        std::string msgStr = msg;
-        m_onError(msgStr);
-    };
+    if (m_onError == nullptr)
+        return;
+    
+    std::string msgStr = msg;
+    m_onError(msg);
+}
 
-
-    int argumentIndex = 1;
-    if (argumentIndex >= argc)
+void ClParser::reportErrorStr(const std::string& msg) const
+{
+    if (m_onError == nullptr)
         return;
 
-    const char* currentArg = argv[argumentIndex];
-    while (currentArg != nullptr)
+    m_onError(msg);
+}
+
+bool ClParser::parse(int argc, char* argv[])
+{
+    ClTokenizer tokenizer;
+    tokenizer.init(argc, argv);
+
+    ClTokenizer::Result result;
+    ClTokenizer::Token t;
+    result = tokenizer.next(t);
+
+    if (result != ClTokenizer::Result::Success)
     {
-        if (s == States::PARAM)
+        reportError("Cannot get applications path.");
+        return false;
+    }
+
+    enum class State
+    {
+        ParamName,
+        ParamValue
+    };
+
+    result = tokenizer.next(t);
+    State state = State::ParamName;
+
+    ParamLoc currentParamLoc = {};
+    while (result != ClTokenizer::Result::End)
+    {
+        if (result != ClTokenizer::Result::Success)
         {
-            std::string arg = currentArg;
-            if (arg.size() == 0)
-                continue;
-
-            if (arg.size() == 1 || arg[0] != '-')
+            switch (result)
             {
-                errCbStr("Found invalid argument/switch, must start with '-'.");
+            case ClTokenizer::Result::ErrorEmptyToken:
+                reportError("Empty token in command line.");
+                return false;
+            case ClTokenizer::Result::ErrorMissingParamName:
+                reportError("Did not specified a parameter name.");
                 return false;
             }
+        }
 
-            bool isLongName = arg[1] == '-';
-            if (isLongName && arg.size() <= 2)
+        if (state == State::ParamName)
+        {
+            auto* name = std::get_if<ClTokenizer::Name>(&t);
+            if (name == nullptr)
             {
-                errCbStr("Found invalid parameter/switch, must start with '--' followed by the property name.");
-                return false;
+                std::stringstream ss;
+                ss << "Expected a parameter name. Found '" << ClTokenizer::toString(t) << "' instead.";
+                reportErrorStr(ss.str());
             }
-        
-            ParamMap::iterator it;
-            if (isLongName)
+
+            if (!parseParamName(*name, currentParamLoc))
+                return false;
+
+            state = State::ParamValue;
+        }
+        else if (state == State::ParamValue)
+        {
+            if (auto eq = std::get_if<ClTokenizer::Equal>(&t))
             {
-                it = m_usedParamNames.find(std::string(rawStr+2));
-                if (it == m_usedParamNames.end())
+                //continue into the next iteration.
+            }
+            else if (auto imm = std::get_if<ClTokenizer::Imm>(&t))
+            {
+                if (!parseParamValue(currentParamLoc, *imm))
                     return false;
             }
             else
             {
-                it = m_usedParamShortNames.find(std::string(rawStr+1));
-                if (it == m_usedParamShortNames.end())
-                    return false;
+                std::stringstream ss;
+                ss << "Unexpected token found: '" << ClTokenizer::toString(t) << "'.";
+                reportErrorStr(ss.str());
+                return false;
             }
-            paramLoc = it->second;
-            s = States::VALUE;
         }
-        else if (s == States::VALUE)
-        {
-            //TODO parse and set values.
-            s = States::VALUE; 
-        }
+
+        result = tokenizer.next(t);
     }
 
     return true;
-#else
+}
+
+bool ClParser::parseParamName(const ClTokenizer::Name& nm, ClParser::ParamLoc& outLoc)
+{
+    bool found = false;
+    if (nm.isShortParam)
+    {
+        auto it = m_usedParamShortNames.find(nm.name);
+        found = it != m_usedParamShortNames.end();
+        if (found)
+            outLoc = it->second;
+    }
+    else
+    {
+        auto it = m_usedParamNames.find(nm.name);
+        found = it != m_usedParamNames.end();
+        if (found)
+            outLoc = it->second;
+    }
+
+    if (!found)
+    {
+        std::stringstream ss;
+        ss << "Unknown parameter/switch '" << nm.name << "' passed" << std::endl; 
+        reportErrorStr(ss.str());
+        return false;
+    }
+
     return true;
-#endif
+}
+
+bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer::Imm& value)
+{
+    void* obj = m_groupBinds[loc.gid];
+    Group& group = m_schema.groups[loc.gid];
+    ParamData& paramType = group.params[loc.paramIndex];
+    if (paramType.type != value.type)
+    {
+        std::stringstream ss;
+        ss << "Parameter " << paramType.longName << " ("
+            << paramType.shortName << ") must be of type " << ClTokenizer::toString(paramType.type)
+            << " but instead found type " << ClTokenizer::toString(value.type) << " of value: "
+            << ClTokenizer::toString(value);
+
+        reportErrorStr(ss.str());
+        return false;
+    }
+
+    return true;
 }
 
 }

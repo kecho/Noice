@@ -1,4 +1,5 @@
 #include "ClTokenizer.h"
+#include <sstream>
 
 namespace noice
 {
@@ -61,6 +62,52 @@ bool parseBool(const std::string& p, bool& output, int& charsParsed)
         return false;
 }
 
+}
+std::string ClTokenizer::toString(const ClTokenizer::Token& t)
+{
+    std::stringstream ss;
+    if (auto imm = std::get_if<Imm>(&t))
+    {
+        switch (imm->type)
+        {
+        case CliParamType::Int:
+            ss << imm->scalar.i;
+            break;
+        case CliParamType::Bool:
+            ss << (imm->scalar.b ? "true" : "false");
+            break;
+        case CliParamType::String:
+            ss << imm->strValue;
+            break;
+        }
+    }
+    else if (auto name = std::get_if<Name>(&t))
+    {
+        ss << name->name;
+    }
+    else if (auto eq = std::get_if<Equal>(&t))
+    {
+        ss << "=";
+    }
+    else 
+    {
+        ss << "<unknown>";
+    }
+    return ss.str();
+}
+
+const char* ClTokenizer::toString(CliParamType type)
+{
+    switch (type)
+    {
+    case CliParamType::Int:
+        return "Int";
+    case CliParamType::Bool:
+        return "Bool";
+    case CliParamType::String:
+        return "String";
+    }
+    return "<unknown>";
 }
 
 ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)

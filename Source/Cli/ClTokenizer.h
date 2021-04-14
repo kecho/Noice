@@ -46,6 +46,9 @@ public:
 
     using Token = std::variant<Imm, Name, Equal>;
 
+    static std::string toString(const Token& t);
+    static const char* toString(CliParamType type);
+
     void init(int argc, char* argv[])
     {
         m_strOffset = 0;

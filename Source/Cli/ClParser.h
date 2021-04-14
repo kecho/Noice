@@ -45,6 +45,8 @@ public:
     bool parse(int argc, char* argv[]);
     void printTokens(int argc, char* argv[]);
 
+    const char* appPath() const { return m_appPath.c_str(); }
+
 private:
     struct Schema
     {
@@ -57,11 +59,17 @@ private:
         int paramIndex;
     };
 
+    void reportError(const char* msg) const;
+    void reportErrorStr(const std::string& msg) const;
+    bool parseParamName(const ClTokenizer::Name& nm, ParamLoc& outLoc);
+    bool parseParamValue(const ParamLoc& loc, const ClTokenizer::Imm& value);
+
     Schema m_schema;
     OnErrorCallback m_onError = nullptr;
     using ParamMap = std::unordered_map<std::string, ParamLoc>;
     ParamMap m_usedParamNames;
     ParamMap m_usedParamShortNames;
+    std::string m_appPath;
     std::vector<void*> m_groupBinds;
 };
 
