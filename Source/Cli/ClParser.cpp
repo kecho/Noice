@@ -19,7 +19,7 @@ ClParser::GroupId ClParser::createGroup(const char* name)
     return gid;
 }
 
-bool ClParser::addParam(ClParser::GroupId gid, const ClParser::ParamData& param)
+bool ClParser::addParam(ClParser::GroupId gid, ClParser::ParamData param)
 {
     if (gid >= (GroupId)m_schema.groups.size())
         return false;
@@ -41,6 +41,13 @@ bool ClParser::addParam(ClParser::GroupId gid, const ClParser::ParamData& param)
     m_usedParamShortNames[param.shortName] = loc;
     m_usedParamNames[param.longName] = loc;
     return true;
+}
+
+void ClParser::bind(ClParser::GroupId gid, void* object)
+{
+    if (gid >= (GroupId)m_groupBinds.size())
+        return;
+    m_groupBinds[gid] = object;
 }
 
 void ClParser::printTokens(int argc, char* argv[])
@@ -122,6 +129,12 @@ bool ClParser::parse(int argc, char* argv[])
         return false;
     }
 
+    if (auto imm = std::get_if<ClTokenizer::Imm>(&t))
+    {
+        if (imm->type == CliParamType::String)
+            m_appPath = imm->strValue;
+    }
+
     enum class State
     {
         ParamName,
@@ -166,7 +179,8 @@ bool ClParser::parse(int argc, char* argv[])
         {
             if (auto eq = std::get_if<ClTokenizer::Equal>(&t))
             {
-                //continue into the next iteration.
+                result = tokenizer.next(t);
+                continue;
             }
             else if (auto imm = std::get_if<ClTokenizer::Imm>(&t))
             {
@@ -180,6 +194,8 @@ bool ClParser::parse(int argc, char* argv[])
                 reportErrorStr(ss.str());
                 return false;
             }
+
+            state = State::ParamName;
         }
 
         result = tokenizer.next(t);
@@ -219,7 +235,7 @@ bool ClParser::parseParamName(const ClTokenizer::Name& nm, ClParser::ParamLoc& o
 
 bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer::Imm& value)
 {
-    void* obj = m_groupBinds[loc.gid];
+    char* obj = (char*)m_groupBinds[loc.gid];
     Group& group = m_schema.groups[loc.gid];
     ParamData& paramType = group.params[loc.paramIndex];
     if (paramType.type != value.type)
@@ -233,6 +249,65 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
         reportErrorStr(ss.str());
         return false;
     }
+
+    
+    if (value.type == CliParamType::String && !paramType.enumNames.empty())
+    {
+        bool found = false;
+        for (auto& enumName : paramType.enumNames)
+        {
+            if (enumName == value.strValue)
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            std::stringstream ss;
+            ss << "Parameter " << paramType.longName << " (" << paramType.shortName << ") must contain one of the following values: ";
+            for (int i = 0; i < paramType.enumNames.size(); ++i)
+                ss  << "\'" << paramType.enumNames[i] << "'"
+                    << (i != (paramType.enumNames.size() - 1) ? "," : "");
+            reportErrorStr(ss.str());
+            return false;
+        }
+    }
+
+    const void* resultPtr = nullptr;
+    int valueBlobSize = 0;
+    switch (value.type)
+    {
+    case CliParamType::String:
+        {
+            m_supportStrings.push_back(new std::string());
+            (*m_supportStrings.back()) = value.strValue;
+            if (obj)
+            {
+                *((const char**)(obj + paramType.offset)) = m_supportStrings.back()->c_str();
+            }
+            resultPtr = m_supportStrings.back()->c_str();
+        }
+        break;
+    case CliParamType::Int:
+        {
+            resultPtr = &value.scalar.i;
+            if (obj)
+                *(int*)(obj + paramType.offset) = value.scalar.i;
+        }
+        break;
+    case CliParamType::Bool:
+        {
+            resultPtr = &value.scalar.b;
+            if (obj)
+                *(bool*)(obj + paramType.offset) = value.scalar.b;
+        }
+        break;
+    }
+
+    if (paramType.onSet != nullptr)
+        paramType.onSet(paramType, loc.gid, resultPtr);
 
     return true;
 }

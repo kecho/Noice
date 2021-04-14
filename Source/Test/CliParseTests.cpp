@@ -1,6 +1,8 @@
 #include "CliParseTests.h"
 #include "Cli/ClTokenizer.h"
 #include "Cli/ClTokenizer.cpp"
+#include "Cli/ClParser.h"
+#include "Cli/ClParser.cpp"
 #include <vector>
 
 namespace noice
@@ -148,6 +150,98 @@ bool cliTokenizer1()
 
     ClTokenizer::Token endToken;
     if (tokenizer.next(endToken) != ClTokenizer::Result::End)
+        return false;
+
+    return true;
+}
+
+bool cliGrammar0()
+{
+    struct SimpleStruct
+    {
+        int intTest0;
+        int intTest1;
+        const char* name0;
+        bool boolTest0;
+        bool boolTest1;
+        const char* name1;
+    };
+
+    char params[][64] ={ "exe", "-i=10", "-j", "-40", "--name0=MyNamE", "-n", "AnotherName", "-btrue", "-q=false" };
+    std::vector<char*> paramsV;
+    for (auto& p : params)
+        paramsV.push_back(p);
+
+    ClParser parser;
+    ClParser::GroupId rootId = parser.createGroup("root");
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
+        "i",
+        "intTest0",
+        CliParamType::Int,
+        offsetof(SimpleStruct, intTest0)));
+
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
+        "j",
+        "intTest1",
+        CliParamType::Int,
+        offsetof(SimpleStruct, intTest1)));
+
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
+        "m",
+        "name0",
+        CliParamType::String,
+        offsetof(SimpleStruct, name0)));
+
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
+        "n",
+        "name1",
+        CliParamType::String,
+        offsetof(SimpleStruct, name1)));
+
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
+        "b",
+        "boolTest0",
+        CliParamType::Bool,
+        offsetof(SimpleStruct, boolTest0)));
+
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
+        "q",
+        "boolTest1",
+        CliParamType::Bool,
+        offsetof(SimpleStruct, boolTest1)));
+    
+    parser.setOnErrorCallback([](const std::string& err)
+    {
+        std::cerr << err << " ";
+    });
+
+    SimpleStruct obj = {};
+    parser.bind(rootId, &obj);
+    if (!parser.parse((int)paramsV.size(), paramsV.data()))
+        return false;
+
+    if (obj.intTest0 != 10)
+        return false;
+
+    if (obj.intTest1 != -40)
+        return false;
+
+    if (std::string(obj.name0) != "MyNamE")
+        return false;
+
+    if (std::string(obj.name1) != "AnotherName")
+        return false;
+
+    if (!obj.boolTest0)
+        return false;
+
+    if (obj.boolTest1)
         return false;
 
     return true;

@@ -17,6 +17,7 @@ struct TestCase
 TestCase g_testRegistry [] = {
     { "Cli Tokenization 0", noice::cliTokenizer0 },
     { "Cli Tokenization 1", noice::cliTokenizer1 },
+    { "Cli Grammar 0", noice::cliGrammar0 },
 };
 
 int main(int argc, char* argv[])

@@ -15,7 +15,7 @@ public:
     using GroupId = unsigned int;
     using ParamId = unsigned int;
     struct ParamData;
-    using ParamCallback = std::function<void(const ParamData&, GroupId, void*)>;
+    using ParamCallback = std::function<void(const ParamData&, GroupId, const void*)>;
     using OnErrorCallback = std::function<void(const std::string&)>;
 
     struct ParamData
@@ -27,6 +27,39 @@ public:
         uint64_t offset;
         std::vector<std::string> enumNames;
         ParamCallback onSet;
+
+        ParamData(
+            std::string pdescription,
+            std::string pshortName,
+            std::string plongName,
+            CliParamType ptype,
+            uint64_t poffset)
+            : description(pdescription)
+            , shortName(pshortName)
+            , longName(plongName)
+            , type(ptype)
+            , offset(poffset)
+            , onSet(nullptr)
+        {
+        }
+
+        ParamData(
+            std::string pdescription,
+            std::string pshortName,
+            std::string plongName,
+            CliParamType ptype,
+            uint64_t poffset,
+            std::vector<std::string> penumNames,
+            ParamCallback ponSet)
+            : description(pdescription)
+            , shortName(pshortName)
+            , longName(plongName)
+            , type(ptype)
+            , offset(poffset)
+            , enumNames(penumNames)
+            , onSet(ponSet)
+        {
+        }
     };
 
     struct Group
@@ -39,7 +72,7 @@ public:
     ClParser() {}
 
     GroupId createGroup(const char* name);
-    bool addParam(GroupId gid, const ParamData& param);
+    bool addParam(GroupId gid, ParamData param);
     void bind(GroupId gid, void* object);
     void setOnErrorCallback(OnErrorCallback cb) { m_onError = cb; }
     bool parse(int argc, char* argv[]);
@@ -71,6 +104,7 @@ private:
     ParamMap m_usedParamShortNames;
     std::string m_appPath;
     std::vector<void*> m_groupBinds;
+    std::vector<std::string*> m_supportStrings;
 };
 
 }
