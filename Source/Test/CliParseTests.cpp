@@ -90,6 +90,34 @@ bool expectEq(ClTokenizer& tokenizer)
 
 bool cliTokenizer0()
 {
+    char params[][64] ={ "=-T=asf", "91"};
+
+    std::vector<char*> paramsV;
+    for (auto& p : params)
+        paramsV.push_back(p);
+
+    ClTokenizer tokenizer;
+    tokenizer.init((int)paramsV.size(), paramsV.data());
+
+    if (!expectEq(tokenizer))
+        return false;
+
+    if (!expectName(tokenizer, "T", true))
+        return false;
+
+    if (!expectEq(tokenizer))
+        return false;
+
+    if (!expectString(tokenizer, "asf"))
+        return false;
+
+    if (!expectInt(tokenizer, 91))
+        return false;
+
+    ClTokenizer::Token endToken;
+    if (tokenizer.next(endToken) != ClTokenizer::Result::End)
+        return false;
+
     return true;
 }
 
