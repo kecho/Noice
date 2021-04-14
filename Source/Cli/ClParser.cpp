@@ -281,13 +281,13 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
     {
     case CliParamType::String:
         {
-            m_supportStrings.push_back(new std::string());
+            m_supportStrings.push_back(std::make_unique<std::string>());
             (*m_supportStrings.back()) = value.strValue;
             if (obj)
             {
-                *((const char**)(obj + paramType.offset)) = m_supportStrings.back()->c_str();
+                *((const char**)(obj + paramType.offset)) = m_supportStrings.back().get()->c_str();
             }
-            resultPtr = m_supportStrings.back()->c_str();
+            resultPtr = m_supportStrings.back().get()->c_str();
         }
         break;
     case CliParamType::Int:

@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
+#include <memory>
 #include "ClTokenizer.h"
 
 namespace noice
@@ -77,7 +78,6 @@ public:
     void setOnErrorCallback(OnErrorCallback cb) { m_onError = cb; }
     bool parse(int argc, char* argv[]);
     void printTokens(int argc, char* argv[]);
-
     const char* appPath() const { return m_appPath.c_str(); }
 
 private:
@@ -104,7 +104,7 @@ private:
     ParamMap m_usedParamShortNames;
     std::string m_appPath;
     std::vector<void*> m_groupBinds;
-    std::vector<std::string*> m_supportStrings;
+    std::vector<std::unique_ptr<std::string>> m_supportStrings;
 };
 
 }
