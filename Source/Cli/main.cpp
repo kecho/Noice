@@ -9,7 +9,9 @@ namespace
 enum class ReturnCodes : int
 {
     Success = 0,
-    BadCmdArgs
+    InternalError = 1,
+    IoError = 2,
+    BadCmdArgs = 3
 };
 
 #define BLUE_TYPE "blue"
@@ -32,15 +34,16 @@ struct ChannelParametes
     bool enabled = false;
     const char* channelName = "";
     const char* noiseType = BLUE_TYPE;
-    float phi2 = 2.1f;
+    float rho2 = 2.1f;
 };
 
 struct ArgParameters
 {
     int width = 128;
     int height = 0;
-    int depth = 0;
+    int depth = 1;
     int seed = 0x12feebade;
+    int threadCount = 16;
     bool printHelp = false;
     bool quiet = false;
     bool pipe = false;
@@ -104,6 +107,11 @@ void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         "Streams the texture file through the standard output. Only binary data is output. "
         "When enabled this program automatically goes into quiet mode.", "p", "pipe", 
         CliParamType::Bool, offsetof(ArgParameters, pipe)
+    ));
+    p.addParam(generalGid, ClParser::ParamData(
+        "Number of software threads to utilize for computation (default is 16)",
+        "t", "threads", 
+        CliParamType::Bool, offsetof(ArgParameters, threadCount)
     ));
 
     ClParser::GroupId channelGid = p.createGroup("Channel", "Channel parameters:");
@@ -188,14 +196,45 @@ int main(int argc, char* argv[])
     noice::TextureFileDesc outDesc;
     outDesc.filename = parameters.outputName;
 
-    TextureComponentHandle handles[4];
+    std::vector<noice::TextureComponentHandle> usedHandles;
+    noice::TextureComponentHandle handles[4] = {};
     for (int i = 0; i < 4; ++i)
     {
-        if (!parameters.channels[i].enabled)
+        const ChannelParametes& channelParmeters = parameters.channels[i];
+        noice::TextureComponentHandle& currentHandle = handles[i];
+        if (!channelParmeters.enabled)
             continue;
 
-        outDesc.channels[i] = &handles[i];
+        outDesc.channels[i] = &currentHandle;
+        std::string noiseType = channelParmeters.noiseType;
+        if (noiseType == "blue")
+        {
+            noice::BlueNoiseGenDesc bnd;
+            bnd.width  = (int)parameters.width;
+            bnd.height = (int)parameters.height;
+            bnd.depth  = (int)parameters.depth;
+            bnd.seed = (unsigned)parameters.seed;
+            bnd.rho2 = channelParmeters.rho2;
+            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, &currentHandle);
+            if (err != noice::Error::Ok)
+            {
+                std::cerr << "Internal error: " << (int)err;
+                return (int)ReturnCodes::InternalError;
+            }
+
+            usedHandles.push_back(currentHandle);
+        }
     }
+
+    noice::Error err = saveTextureToFile(outDesc);
+    if (err != noice::Error::Ok)
+    {
+        std::cerr << "Internal error: " << (int)err;
+        return (int)ReturnCodes::IoError;
+    }
+
+    for (auto usedHandle : usedHandles)
+        noice::deleteComponent(&usedHandle);
 
     return (int)ReturnCodes::Success;
 }

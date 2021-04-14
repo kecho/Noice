@@ -74,7 +74,7 @@ static bool isValidFileName(const TextureFileDesc& desc)
 
 Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream)
 {
-    if (isValidFileName(desc))
+    if (!isValidFileName(desc))
         return Error::InvalidFileName;
 
     Channel rgbaContent[4];
@@ -112,7 +112,7 @@ Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream)
 
 Error saveTextureToFile(const TextureFileDesc& desc)
 {
-    if (isValidFileName(desc))
+    if (!isValidFileName(desc))
         return Error::InvalidFileName;
         
     FileStreamOut fileStream(desc.filename);
@@ -132,40 +132,5 @@ void deleteComponent(TextureComponentHandle* component)
     delete img;
     *component = TextureComponentHandle();
 }
-
-#if 0
-void makeBlueNoise(int w, int h, int d, int threadCount)
-{
-    auto t0 = std::chrono::high_resolution_clock::now();
-    BlueNoiseGenDesc desc;
-    desc.width = w;
-    desc.height = h;
-    desc.depth = d;
-    noice::Image outputImage;
-    blueNoiseGenerator(desc, threadCount, outputImage);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto ms_result = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-    //std::cout << "Duration: " << ms_result.count() << " ms " << std::endl;
-
-    //////////////////////
-    Channel r = { &outputImage };
-    Channel g = { &outputImage };
-    const Channel* rgba[4] = { &r, &g, nullptr, nullptr };
-    SR sr;
-    streamOutImage("testImage.exr",
-        sr, desc.width, desc.height, desc.depth, rgba);
-
-    ispc::Image img;
-    img.width = w;
-    img.height = h;
-    img.data = pixels.data();
-
-
-    Imf::RgbaOutputFile file ("testImage.exr", w, h, Imf::WRITE_R);
-    file.setFrameBuffer (outputPixels.data(), 1, w);
-    file.writePixels(h);
-}
-#endif
 
 }
