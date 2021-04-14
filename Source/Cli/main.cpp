@@ -12,11 +12,8 @@ enum class ReturnCodes : int
     BadCmdArgs
 };
 
-#define BLUE_TYPE "blue-noise"
-const char* blueNoiseAlias[] = { "blue", "b", nullptr };
-
-#define WHITE_TYPE "white-noise"
-const char* whiteNoiseAlias[] = { "white", "w", nullptr };
+#define BLUE_TYPE "blue"
+#define WHITE_TYPE "white"
 
 bool isAlias(std::string name, const char** aliases)
 {
@@ -58,10 +55,13 @@ void printHeader()
     std::cout << "   | A texture noise generator utility |" << std::endl;
     std::cout << "   | Copyright (c) 2021 Kleber Garcia  |" << std::endl;
     std::cout << "   +-----------------------------------+" << std::endl << std::endl;
+}
+
+void printExample()
+{
     std::cout << "Usage: noice [-flag|--name=value|-flag=value]*  " << std::endl;
     std::cout << "Example that generates blue noise on red channel and white on green: " << std::endl;
     std::cout << "noice -W 256 -cR -n blue -cG -n white -o output.exr" << std::endl << std::endl;
-
 }
 
 void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
@@ -134,7 +134,7 @@ void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         "Sets the blue noise type on the particular active channel.",
         "n", "noise", 
         CliParamType::String, offsetof(ChannelParametes, noiseType),
-        { "blue", "white" }, nullptr
+        { BLUE_TYPE, WHITE_TYPE }, nullptr
     ));
 }
 
@@ -155,22 +155,48 @@ int main(int argc, char* argv[])
     if (!parser.parse(argc, argv))
         return (int)ReturnCodes::BadCmdArgs;
 
-    if (parameters.printHelp)
+    if (!parameters.quiet)
     {
         printHeader();
-        parser.prettyPrintHelp();
-        return (int)ReturnCodes::Success;
+        if (parameters.printHelp)
+        {
+            printExample();
+            parser.prettyPrintHelp();
+            return (int)ReturnCodes::Success;
+        }
     }
 
     if (parameters.height == 0)
         parameters.height = parameters.width;
 
 
+    bool useDefaultChannel = true;
     for (int i = 0; i < 4; ++i)
     {
         if (parameters.channels[i].enabled)
-            std::cout << "Channel " << i << " enabled" << std::endl;
+        {
+            useDefaultChannel = false;
+            break;
+        }
     }
+
+    if (useDefaultChannel)
+    {
+        parameters.channels[0].enabled = true;
+    }
+
+    noice::TextureFileDesc outDesc;
+    outDesc.filename = parameters.outputName;
+
+    TextureComponentHandle handles[4];
+    for (int i = 0; i < 4; ++i)
+    {
+        if (!parameters.channels[i].enabled)
+            continue;
+
+        outDesc.channels[i] = &handles[i];
+    }
+
     return (int)ReturnCodes::Success;
 }
 
