@@ -52,16 +52,13 @@ private:
     std::string m_filename;
 };
 
-Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle* component)
+Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle& outputComponent)
 {
-    if (component == nullptr)
-        return Error::HandleIsNull;
-
-    if (component->opaquePtr != 0u)
+    if (outputComponent.opaquePtr != 0u)
         return Error::OpaqueNotNull;
 
     auto img = new noice::Image();
-    *component = img->asHandle();
+    outputComponent = img->asHandle();
 
     return blueNoiseGenerator(desc, threadCount, *img);
 }
@@ -70,6 +67,8 @@ static bool isValidFileName(const TextureFileDesc& desc)
 {
     if (desc.filename == nullptr || desc.filename[0] == '\0')
         return false;
+
+    return true;
 }
 
 Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream)
@@ -84,11 +83,11 @@ Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream)
     int depth  = -1;
     for (int c = 0; c < (int)Channels::Count; ++c)
     {
-        const TextureComponentHandle* component = desc.channels[c];
-        if (component == nullptr || component->opaquePtr == 0)
+        const TextureComponentHandle& component = desc.channels[c];
+        if (component.opaquePtr == nullptr)
             continue;
 
-        Image* img = Image::get(*component);
+        Image* img = Image::get(component);
         if (width == -1)
             width = img->img().width;
         if (height == -1)
@@ -123,14 +122,14 @@ Error saveTextureToFile(const TextureFileDesc& desc)
     return err;
 }
 
-void deleteComponent(TextureComponentHandle* component)
+void deleteComponent(TextureComponentHandle& component)
 {
-    if (component == nullptr || component->opaquePtr == nullptr)
+    if (component.opaquePtr == nullptr)
         return;
 
-    Image* img = Image::get(*component);
+    Image* img = Image::get(component);
     delete img;
-    *component = TextureComponentHandle();
+    component = TextureComponentHandle();
 }
 
 }

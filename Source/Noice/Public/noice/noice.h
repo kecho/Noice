@@ -44,13 +44,13 @@ struct BlueNoiseGenDesc
 struct TextureFileDesc
 {
     const char* filename = nullptr;
-    const TextureComponentHandle* channels[4] = {};
+    TextureComponentHandle channels[4] = {};
 };
 
-Error generateBlueNoise  (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle* component);
+Error generateBlueNoise  (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle& outputComponent);
 Error saveTextureToFile  (const TextureFileDesc& desc);
 Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream);
 
-void deleteComponent(TextureComponentHandle* component);
+void deleteComponent(TextureComponentHandle& component);
 
 }

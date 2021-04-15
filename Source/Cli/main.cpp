@@ -32,6 +32,7 @@ bool isAlias(std::string name, const char** aliases)
 struct ChannelParametes
 {
     bool enabled = false;
+    int seed = 0x12feebade;
     const char* channelName = "";
     const char* noiseType = BLUE_TYPE;
     float rho2 = 2.1f;
@@ -42,7 +43,6 @@ struct ArgParameters
     int width = 128;
     int height = 0;
     int depth = 1;
-    int seed = 0x12feebade;
     int threadCount = 16;
     bool printHelp = false;
     bool quiet = false;
@@ -96,10 +96,6 @@ void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         CliParamType::Uint, offsetof(ArgParameters, depth)
     ));   
     p.addParam(generalGid, ClParser::ParamData(
-        "Random number seed utilized, for deterministic generation of noise.", "s", "seed", 
-        CliParamType::Int, offsetof(ArgParameters, seed)
-    ));
-    p.addParam(generalGid, ClParser::ParamData(
         "Disables all the standard output, when writting a texture to a file", "q", "quiet", 
         CliParamType::Bool, offsetof(ArgParameters, quiet)
     ));
@@ -137,9 +133,12 @@ void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
             p.bind(gid, &objectPtr->channels[activeChannel]);
         }
     ));
-
     p.addParam(channelGid, ClParser::ParamData(
-        "Sets the blue noise type on the particular active channel.",
+        "Random number seed utilized, for deterministic generation of noise.", "s", "seed", 
+        CliParamType::Int, offsetof(ChannelParametes, seed)
+    ));
+    p.addParam(channelGid, ClParser::ParamData(
+        "Sets the noise type on the particular active channel.",
         "n", "noise", 
         CliParamType::String, offsetof(ChannelParametes, noiseType),
         { BLUE_TYPE, WHITE_TYPE }, nullptr
@@ -197,25 +196,23 @@ int main(int argc, char* argv[])
     outDesc.filename = parameters.outputName;
 
     std::vector<noice::TextureComponentHandle> usedHandles;
-    noice::TextureComponentHandle handles[4] = {};
     for (int i = 0; i < 4; ++i)
     {
         const ChannelParametes& channelParmeters = parameters.channels[i];
-        noice::TextureComponentHandle& currentHandle = handles[i];
+        noice::TextureComponentHandle& currentHandle = outDesc.channels[i];
         if (!channelParmeters.enabled)
             continue;
 
-        outDesc.channels[i] = &currentHandle;
         std::string noiseType = channelParmeters.noiseType;
-        if (noiseType == "blue")
+        if (noiseType == BLUE_TYPE) 
         {
             noice::BlueNoiseGenDesc bnd;
             bnd.width  = (int)parameters.width;
             bnd.height = (int)parameters.height;
             bnd.depth  = (int)parameters.depth;
-            bnd.seed = (unsigned)parameters.seed;
+            bnd.seed = (unsigned)channelParmeters.seed;
             bnd.rho2 = channelParmeters.rho2;
-            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, &currentHandle);
+            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
             if (err != noice::Error::Ok)
             {
                 std::cerr << "Internal error: " << (int)err;
@@ -234,7 +231,7 @@ int main(int argc, char* argv[])
     }
 
     for (auto usedHandle : usedHandles)
-        noice::deleteComponent(&usedHandle);
+        noice::deleteComponent(usedHandle);
 
     return (int)ReturnCodes::Success;
 }
