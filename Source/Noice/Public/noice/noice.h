@@ -13,6 +13,8 @@ enum class Error
 {
     Ok,
     BadArgs,
+    NoPixels,
+    CorruptedHandle,
     CantOpenFile,
     HandleIsNull,
     OpaqueNotNull,
@@ -50,10 +52,20 @@ struct TextureFileDesc
     TextureComponentHandle channels[4] = {};
 };
 
-Error generateBlueNoise  (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle& outputComponent);
-Error saveTextureToFile  (const TextureFileDesc& desc);
-Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream);
-
+TextureComponentHandle createTextureComponent();
 void deleteComponent(TextureComponentHandle& component);
+Error generateBlueNoise     (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle component);
+Error saveTextureToFile     (const TextureFileDesc& desc);
+Error saveTextureToStream   (const TextureFileDesc& desc, OutputStream& outStream);
+
+//event handles, to track progress or even cancel jobs.
+struct EventArguments
+{
+    void* userData;
+};
+
+typedef void (*EventCallback)(const EventArguments&);
+void attachEventHandle(EventCallback callback, void* userData, TextureComponentHandle handle);
+
 
 }

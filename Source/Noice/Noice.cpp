@@ -16,7 +16,9 @@ namespace noice
 static const char* sErrorString[(int)Error::Count] = 
 {
     "Ok",
-    "Bad args",
+    "bad args",
+    "No pixels",
+    "Corrupted Handle",
     "Cant open file",
     "Handle is null",
     "Opaque not null",
@@ -73,13 +75,20 @@ private:
     std::string m_filename;
 };
 
-Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle& outputComponent)
+TextureComponentHandle createTextureComponent()
 {
-    if (outputComponent.opaquePtr != 0u)
-        return Error::OpaqueNotNull;
-
     auto img = new noice::Image();
-    outputComponent = img->asHandle();
+    return img->asHandle();
+}
+
+Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle component)
+{
+    if (component.opaquePtr == nullptr)
+        return Error::HandleIsNull;
+
+    Image* img = Image::get(component);
+    if (img == nullptr)
+        return Error::CorruptedHandle;
 
     return blueNoiseGenerator(desc, threadCount, *img);
 }
@@ -151,6 +160,15 @@ void deleteComponent(TextureComponentHandle& component)
     Image* img = Image::get(component);
     delete img;
     component = TextureComponentHandle();
+}
+
+void attachEventCallback(EventCallback callback, void* userData, TextureComponentHandle component)
+{
+    if (component.opaquePtr == nullptr)
+        return;
+
+    Image* img = Image::get(component);
+    img->attachEventCb(callback, userData);
 }
 
 }

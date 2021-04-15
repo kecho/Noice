@@ -163,6 +163,7 @@ ReturnCodes work(const ArgParameters& parameters)
             bnd.depth  = (int)parameters.depth;
             bnd.seed = (unsigned)channelParmeters.seed;
             bnd.rho2 = channelParmeters.rho2;
+            currentHandle = noice::createTextureComponent();
             noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
             if (err != noice::Error::Ok)
             {

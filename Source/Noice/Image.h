@@ -27,9 +27,25 @@ public:
         return (Image*)handle.opaquePtr;
     }
 
+    bool hasEventCb() const  { return m_eventCb != nullptr; }
+
+    void attachEventCb(EventCallback cb, void* userData)
+    {
+        m_eventCb = cb;
+        m_userData = userData;
+    }
+
+    void dispatchEvent()
+    {
+        EventArguments args = { m_userData };
+        m_eventCb(args);
+    }
+
 private:
     std::vector<float> m_support;
     ispc::Image m_img;
+    EventCallback m_eventCb = nullptr;
+    void* m_userData = nullptr;
 };
 
 }
