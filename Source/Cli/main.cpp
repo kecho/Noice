@@ -53,11 +53,7 @@ struct ArgParameters
 
 void printHeader()
 {
-    std::cout << "   +-----------------------------------+" << std::endl;
-    std::cout << "   |               noice               |" << std::endl;
-    std::cout << "   | A texture noise generator utility |" << std::endl;
-    std::cout << "   | Copyright (c) 2021 Kleber Garcia  |" << std::endl;
-    std::cout << "   +-----------------------------------+" << std::endl << std::endl;
+    std::cout << " noice - copyright (c) 2021 Kleber Garcia " << std::endl;
 }
 
 void printExample()
@@ -194,8 +190,8 @@ int main(int argc, char* argv[])
 
     noice::TextureFileDesc outDesc;
     outDesc.filename = parameters.outputName;
-
     std::vector<noice::TextureComponentHandle> usedHandles;
+    std::cout << "Generating '" << outDesc.filename << "'" << std::endl;
     for (int i = 0; i < 4; ++i)
     {
         const ChannelParametes& channelParmeters = parameters.channels[i];
