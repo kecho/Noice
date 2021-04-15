@@ -19,8 +19,11 @@ enum class Error
     InconsistentDimensions,
     NoInputImageSpecified,
     InvalidFileName,
-    IoIssue
+    IoIssue,
+    Count
 };
+
+const char* getErrorString(Error err);
 
 struct TextureComponentHandle
 {

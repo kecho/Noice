@@ -53,7 +53,8 @@ struct ArgParameters
 
 void printHeader()
 {
-    std::cout << " noice - copyright (c) 2021 Kleber Garcia " << std::endl;
+    std::cout << ">>Noice<<" << std::endl;
+    std::cout << "copyright (c) 2021 Kleber Garcia " << std::endl << std::endl;
 }
 
 void printExample()
@@ -141,6 +142,54 @@ void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
     ));
 }
 
+ReturnCodes work(const ArgParameters& parameters)
+{
+    noice::TextureFileDesc outDesc;
+    outDesc.filename = parameters.outputName;
+    std::vector<noice::TextureComponentHandle> usedHandles;
+    for (int i = 0; i < 4; ++i)
+    {
+        const ChannelParametes& channelParmeters = parameters.channels[i];
+        noice::TextureComponentHandle& currentHandle = outDesc.channels[i];
+        if (!channelParmeters.enabled)
+            continue;
+
+        std::string noiseType = channelParmeters.noiseType;
+        if (noiseType == BLUE_TYPE) 
+        {
+            noice::BlueNoiseGenDesc bnd;
+            bnd.width  = (int)parameters.width;
+            bnd.height = (int)parameters.height;
+            bnd.depth  = (int)parameters.depth;
+            bnd.seed = (unsigned)channelParmeters.seed;
+            bnd.rho2 = channelParmeters.rho2;
+            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
+            if (err != noice::Error::Ok)
+            {
+                std::cerr << "Generator error" << noice::getErrorString(err);
+                return ReturnCodes::InternalError;
+            }
+
+            usedHandles.push_back(currentHandle);
+        }
+    }
+
+    noice::Error err = saveTextureToFile(outDesc);
+    if (err != noice::Error::Ok)
+    {
+        std::cerr << "Texture output error: " << noice::getErrorString(err);
+        return ReturnCodes::IoError;
+    }
+
+    for (auto usedHandle : usedHandles)
+        noice::deleteComponent(usedHandle);
+
+    if (!parameters.quiet)
+        std::cout << "Success." << std::endl;
+
+    return ReturnCodes::Success;
+}
+
 }
 
 int main(int argc, char* argv[])
@@ -172,7 +221,6 @@ int main(int argc, char* argv[])
     if (parameters.height == 0)
         parameters.height = parameters.width;
 
-
     bool useDefaultChannel = true;
     for (int i = 0; i < 4; ++i)
     {
@@ -188,47 +236,12 @@ int main(int argc, char* argv[])
         parameters.channels[0].enabled = true;
     }
 
-    noice::TextureFileDesc outDesc;
-    outDesc.filename = parameters.outputName;
-    std::vector<noice::TextureComponentHandle> usedHandles;
-    std::cout << "Generating '" << outDesc.filename << "'" << std::endl;
-    for (int i = 0; i < 4; ++i)
+    if (!parameters.quiet)
     {
-        const ChannelParametes& channelParmeters = parameters.channels[i];
-        noice::TextureComponentHandle& currentHandle = outDesc.channels[i];
-        if (!channelParmeters.enabled)
-            continue;
-
-        std::string noiseType = channelParmeters.noiseType;
-        if (noiseType == BLUE_TYPE) 
-        {
-            noice::BlueNoiseGenDesc bnd;
-            bnd.width  = (int)parameters.width;
-            bnd.height = (int)parameters.height;
-            bnd.depth  = (int)parameters.depth;
-            bnd.seed = (unsigned)channelParmeters.seed;
-            bnd.rho2 = channelParmeters.rho2;
-            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
-            if (err != noice::Error::Ok)
-            {
-                std::cerr << "Internal error: " << (int)err;
-                return (int)ReturnCodes::InternalError;
-            }
-
-            usedHandles.push_back(currentHandle);
-        }
+        std::cout << "Generating '" << parameters.outputName << "'" << std::endl;
     }
 
-    noice::Error err = saveTextureToFile(outDesc);
-    if (err != noice::Error::Ok)
-    {
-        std::cerr << "Internal error: " << (int)err;
-        return (int)ReturnCodes::IoError;
-    }
-
-    for (auto usedHandle : usedHandles)
-        noice::deleteComponent(usedHandle);
-
-    return (int)ReturnCodes::Success;
+    return (int)work(parameters);
 }
+
 

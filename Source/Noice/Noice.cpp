@@ -13,6 +13,27 @@
 namespace noice
 {
 
+static const char* sErrorString[(int)Error::Count] = 
+{
+    "Ok",
+    "Bad args",
+    "Cant open file",
+    "Handle is null",
+    "Opaque not null",
+    "Inconsistent dimensions",
+    "No input image specified",
+    "Invalid file name",
+    "Io issue"
+};
+
+const char* getErrorString(Error err)
+{
+    if ((int)err >= (int)Error::Count)
+        return "Unknown error";
+
+    return sErrorString[(int)err];
+}
+
 class StdStreamOut : public OutputStream
 {
 public:
