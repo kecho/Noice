@@ -74,10 +74,11 @@ Error saveTextureToStream   (const TextureFileDesc& desc, OutputStream& outStrea
 struct EventArguments
 {
     void* userData;
+    int pixelsProcessed;
 };
 
 typedef void (*EventCallback)(const EventArguments&);
-void attachEventHandle(TextureComponentHandle handle, EventCallback callback, void* userData);
+void attachEventCallback(TextureComponentHandle handle, EventCallback callback, void* userData, int sampleFrequency);
 
 struct Stopwatch
 {

@@ -162,13 +162,13 @@ void deleteComponent(TextureComponentHandle& component)
     component = TextureComponentHandle();
 }
 
-void attachEventCallback(TextureComponentHandle component, EventCallback callback, void* userData)
+void attachEventCallback(TextureComponentHandle component, EventCallback callback, void* userData, int sampleFrequency)
 {
     if (component.opaquePtr == nullptr)
         return;
 
     Image* img = Image::get(component);
-    img->attachEventCb(callback, userData);
+    img->attachEventCb(callback, sampleFrequency, userData);
 }
 
 void attachStopwatch(TextureComponentHandle component, Stopwatch* stopwatchObject)

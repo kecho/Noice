@@ -49,10 +49,13 @@ private:
 };
 
 
-Error blueNoiseGenerator(
+template<bool useEventCallback>
+static Error blueNoiseGeneratorTemplate(
     const BlueNoiseGenDesc& desc,
     int threadCount,
-    Image& output)
+    Image& output,
+    EventCallback eventCallback,    
+    void* eventUserData)
 {
     int wh = desc.width * desc.height;
     output.init(desc.width, desc.height, desc.depth);
@@ -66,6 +69,10 @@ Error blueNoiseGenerator(
     distancePixels.clear(0.0f);
 
     ispc::PixelState currentPixel = {};
+    
+    EventArguments callbackArgs;
+    callbackArgs.userData = eventUserData;
+    int eventCounter = 0;
     for (int pixelIt = 0; pixelIt < output.pixelCount(); ++pixelIt)
     {
         float rank = (float)pixelIt / (float)output.pixelCount();
@@ -80,9 +87,41 @@ Error blueNoiseGenerator(
         distanceKernel.kernel().args(currX, currY, currZ);
         distanceKernel.run(distancePixels.img());
         currentPixel = searcher.findMin(distancePixels.img());
+
+        if (useEventCallback)
+        {
+            if (eventCounter > output.getEventFrequency())
+            {
+                eventCounter = 0;
+                callbackArgs.pixelsProcessed = pixelIt + 1;
+                eventCallback(callbackArgs);
+            }
+            ++eventCounter;
+        }
+    }
+
+    if (useEventCallback)
+    {
+        callbackArgs.pixelsProcessed = (int)output.pixelCount();
+        eventCallback(callbackArgs);
     }
 
     return Error::Ok;
+}
+
+Error blueNoiseGenerator(
+    const BlueNoiseGenDesc& desc,
+    int threadCount,
+    Image& output)
+{
+    if (output.hasEventCb())
+    {
+        return blueNoiseGeneratorTemplate<true>(desc, threadCount, output, output.getEventCb(), output.getEventUserData());
+    }
+    else
+    {
+        return blueNoiseGeneratorTemplate<false>(desc, threadCount, output, nullptr, nullptr);
+    }
 }
 
 }
