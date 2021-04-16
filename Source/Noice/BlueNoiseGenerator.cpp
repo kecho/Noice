@@ -57,6 +57,8 @@ static Error blueNoiseGeneratorTemplate(
     EventCallback eventCallback,    
     void* eventUserData)
 {
+    using TimeType = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
     int wh = desc.width * desc.height;
     output.init(desc.width, desc.height, desc.depth);
 
@@ -69,6 +71,11 @@ static Error blueNoiseGeneratorTemplate(
     distancePixels.clear(0.0f);
 
     ispc::PixelState currentPixel = {};
+
+    Stopwatch* stopwatch = output.getStopwatchObject();
+    TimeType timeStart = {};
+    if (stopwatch)
+        timeStart = std::chrono::high_resolution_clock::now();
     
     EventArguments callbackArgs;
     callbackArgs.userData = eventUserData;
@@ -100,6 +107,10 @@ static Error blueNoiseGeneratorTemplate(
         }
     }
 
+    if (stopwatch)
+        stopwatch->microseconds = (unsigned int)std::chrono::duration_cast<std::chrono::microseconds>
+            (std::chrono::high_resolution_clock::now() - timeStart).count();
+
     if (useEventCallback)
     {
         callbackArgs.pixelsProcessed = (int)output.pixelCount();
@@ -120,7 +131,7 @@ Error blueNoiseGenerator(
     }
     else
     {
-        return blueNoiseGeneratorTemplate<false>(desc, threadCount, output, nullptr, nullptr);
+        return blueNoiseGeneratorTemplate<false >(desc, threadCount, output, nullptr, nullptr);
     }
 }
 

@@ -193,6 +193,7 @@ ReturnCodes work(const ArgParameters& parameters)
     std::vector<noice::TextureComponentHandle> usedHandles;
     ProgressInfo progressInfo;
     progressInfo.maxPixels = (float)parameters.width * parameters.height * parameters.depth;
+    noice::Stopwatch stopwatch = {};
     for (int i = 0; i < 4; ++i)
     {
         const ChannelParametes& channelParmeters = parameters.channels[i];
@@ -213,8 +214,10 @@ ReturnCodes work(const ArgParameters& parameters)
             if (!parameters.quiet && !parameters.disableProgbar)
             {
                 progressInfo.msgPrefix = channelNames[i];
+                stopwatch = {};
                 noice::attachEventCallback(currentHandle, &printProgress, &progressInfo, 300);
             }
+            noice::attachStopwatch(currentHandle, &stopwatch);
             noice::Error err = generateBlueNoise(currentHandle, bnd, parameters.threadCount);
             if (err != noice::Error::Ok)
             {
@@ -222,6 +225,7 @@ ReturnCodes work(const ArgParameters& parameters)
                 return ReturnCodes::InternalError;
             }
 
+            std::cout << "time: " << (float)stopwatch.microseconds / (1000.0f*1000.0f) << " seconds" << std::endl;
             usedHandles.push_back(currentHandle);
         }
     }
@@ -290,7 +294,15 @@ int main(int argc, char* argv[])
 
     if (!parameters.quiet)
     {
-        std::cout << "Generating '" << parameters.outputName << "'" << std::endl;
+        std::cout << "Generating " << parameters.width << "x" << parameters.height;
+        if (parameters.depth > 1) 
+            std::cout << "x" << parameters.depth;
+        std::cout << " [";
+        std::cout << (parameters.channels[0].enabled ? "r" : "")
+            << (parameters.channels[1].enabled ? "g" : "")
+            << (parameters.channels[2].enabled ? "b" : "")
+            << (parameters.channels[3].enabled ? "a" : "");
+        std::cout << "] - " << parameters.outputName << std::endl;
     }
 
     return (int)work(parameters);

@@ -44,6 +44,7 @@ public:
     int getEventFrequency() const { return m_eventSampleFrequency; }
     EventCallback getEventCb() const { return m_eventCb; }
     void* getEventUserData() const { return m_userData; }
+    Stopwatch* getStopwatchObject() { return m_stopwatchObject; }
 
 private:
     //pixel support vector
