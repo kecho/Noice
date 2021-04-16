@@ -46,6 +46,7 @@ struct ArgParameters
     int threadCount = 16;
     bool printHelp = false;
     bool quiet = false;
+    bool disableProgbar = false;
     bool pipe = false;
     const char* outputName = "noise.exr";
     ChannelParametes channels[4];
@@ -64,51 +65,56 @@ void printExample()
     std::cout << "noice -W 256 -cR -n blue -cG -n white -o output.exr" << std::endl << std::endl;
 }
 
-void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
+bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
 {
+    #define Check(x) if (!(x)) { std::cerr << "Found duplicate schema name line number:" << __LINE__ << std::endl; return false; }
     using namespace noice;
     ArgParameters* objectPtr = &object;
     ClParser::GroupId generalGid = p.createGroup("General", "General parameters:");
     p.bind(generalGid, objectPtr);
-    p.addParam(generalGid, ClParser::ParamData(
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Print help dialog.",
         "h", "help", 
         CliParamType::Bool, offsetof(ArgParameters, printHelp)
-    ));
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "The texture name. This application always writes .exr files. The extension .exr gets automatically appended if not included.",
         "o", "output", 
         CliParamType::String, offsetof(ArgParameters, outputName)
-    ));
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Width of the target texture (defaults to 128)", "W", "width", 
         CliParamType::Uint, offsetof(ArgParameters, width)
-    ));   
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Height of the target texture (defaults to width)", "H", "height", 
         CliParamType::Uint, offsetof(ArgParameters, height)
-    ));
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Depth of the target texture (defaults to 1 pixel, or a 2d texture)", "D", "depth", 
         CliParamType::Uint, offsetof(ArgParameters, depth)
-    ));   
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Disables all the standard output, when writting a texture to a file", "q", "quiet", 
         CliParamType::Bool, offsetof(ArgParameters, quiet)
-    ));
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
+        "Disables the progress bar output", "g", "disable_progbar", 
+        CliParamType::Bool, offsetof(ArgParameters, disableProgbar)
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Streams the texture file through the standard output. Only binary data is output. "
         "When enabled this program automatically goes into quiet mode.", "p", "pipe", 
         CliParamType::Bool, offsetof(ArgParameters, pipe)
-    ));
-    p.addParam(generalGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(generalGid, ClParser::ParamData(
         "Number of software threads to utilize for computation (default is 16)",
         "t", "threads", 
         CliParamType::Bool, offsetof(ArgParameters, threadCount)
-    ));
+    )))
 
     ClParser::GroupId channelGid = p.createGroup("Channel", "Channel parameters:");
-    p.addParam(channelGid, ClParser::ParamData(
+    Check(p.addParam(channelGid, ClParser::ParamData(
         "Sets the channel for which all the following channel parameters will affect.\n"
         "\tFor example, doing -cR means that we activate red channel and all the following\n"
         "\tchannel switches will affect such channel.\n"
@@ -129,24 +135,55 @@ void prepareCliSchema(noice::ClParser& p, ArgParameters& object)
             objectPtr->channels[activeChannel].enabled = true;
             p.bind(gid, &objectPtr->channels[activeChannel]);
         }
-    ));
-    p.addParam(channelGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(channelGid, ClParser::ParamData(
         "Random number seed utilized, for deterministic generation of noise.", "s", "seed", 
         CliParamType::Int, offsetof(ChannelParametes, seed)
-    ));
-    p.addParam(channelGid, ClParser::ParamData(
+    )))
+    Check(p.addParam(channelGid, ClParser::ParamData(
         "Sets the noise type on the particular active channel.",
         "n", "noise", 
         CliParamType::String, offsetof(ChannelParametes, noiseType),
         { BLUE_TYPE, WHITE_TYPE }, nullptr
-    ));
+    )))
+
+    return true;
+}
+
+struct ProgressInfo
+{
+    const char* msgPrefix = "";
+    float maxPixels = 0.0f;
+};
+
+void printProgress(const noice::EventArguments& args)
+{
+    const auto* progressInfo = (const ProgressInfo*)args.userData;
+    float perc = (float)args.pixelsProcessed / progressInfo->maxPixels;
+    const int spaces = 30;
+    const float spacesf = (const float)spaces;
+    int progressCount = (int)(spacesf * perc);
+    char spaceStr[spaces + 1];
+    for (int i = 0; i < progressCount; ++i)
+        spaceStr[i] = '|';
+    for (int i = progressCount; i < spaces; ++i)
+        spaceStr[i] = ' ';
+    spaceStr[spaces] = '\0';
+    bool isFinished = args.pixelsProcessed == progressInfo->maxPixels;
+    std::cout << "\r [" << progressInfo->msgPrefix << "] progress: [" << spaceStr << "]" << std::flush;
+    if (isFinished)
+        std::cout << std::endl;
 }
 
 ReturnCodes work(const ArgParameters& parameters)
 {
+    const char* channelNames[] = { "r", "g", "b", "a" };
+
     noice::TextureFileDesc outDesc;
     outDesc.filename = parameters.outputName;
     std::vector<noice::TextureComponentHandle> usedHandles;
+    ProgressInfo progressInfo;
+    progressInfo.maxPixels = (float)parameters.width * parameters.height * parameters.depth;
     for (int i = 0; i < 4; ++i)
     {
         const ChannelParametes& channelParmeters = parameters.channels[i];
@@ -164,6 +201,11 @@ ReturnCodes work(const ArgParameters& parameters)
             bnd.seed = (unsigned)channelParmeters.seed;
             bnd.rho2 = channelParmeters.rho2;
             currentHandle = noice::createTextureComponent();
+            if (!parameters.quiet && !parameters.disableProgbar)
+            {
+                progressInfo.msgPrefix = channelNames[i];
+                noice::attachEventCallback(&printProgress, &progressInfo, 300, currentHandle);
+            }
             noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
             if (err != noice::Error::Ok)
             {
