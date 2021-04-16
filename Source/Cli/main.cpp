@@ -67,61 +67,63 @@ void printExample()
 
 bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
 {
-    #define Check(x) if (!(x)) { std::cerr << "Found duplicate schema name line number:" << __LINE__ << std::endl; return false; }
+    #define CliSwitch(id, desc, sn, ln, tp, st, mem) \
+        if (!p.addParam(id, ClParser::ParamData(desc, sn, ln, CliParamType::tp, offsetof(st, mem))))\
+        { std::cerr << "Found duplicate schema name :" << sn << " " << ln << std::endl; return false; }
+
+    #define CliSwitchAction(id, desc, sn, ln, tp, st, mem, lst, lmbda) \
+        if (!p.addParam(id, ClParser::ParamData(desc, sn, ln, CliParamType::tp, offsetof(st, mem), lst, lmbda)))\
+        { std::cerr << "Found duplicate schema name :" << sn << " " << ln << std::endl; return false; }
+
     using namespace noice;
     ArgParameters* objectPtr = &object;
     ClParser::GroupId generalGid = p.createGroup("General", "General parameters:");
+    ClParser::GroupId channelGid = p.createGroup("Channel", "Channel parameters:");
+
     p.bind(generalGid, objectPtr);
-    Check(p.addParam(generalGid, ClParser::ParamData(
+
+    CliSwitch(generalGid, 
         "Print help dialog.",
         "h", "help", 
-        CliParamType::Bool, offsetof(ArgParameters, printHelp)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Bool, ArgParameters, printHelp);
+
+    CliSwitch(generalGid,
         "The texture name. This application always writes .exr files. The extension .exr gets automatically appended if not included.",
         "o", "output", 
-        CliParamType::String, offsetof(ArgParameters, outputName)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        String, ArgParameters, outputName);
+
+    CliSwitch(generalGid, 
         "Width of the target texture (defaults to 128)", "W", "width", 
-        CliParamType::Uint, offsetof(ArgParameters, width)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Uint, ArgParameters, width);
+    
+    CliSwitch(generalGid, 
         "Height of the target texture (defaults to width)", "H", "height", 
-        CliParamType::Uint, offsetof(ArgParameters, height)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Uint, ArgParameters, height);
+    
+    CliSwitch(generalGid, 
         "Depth of the target texture (defaults to 1 pixel, or a 2d texture)", "D", "depth", 
-        CliParamType::Uint, offsetof(ArgParameters, depth)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Uint, ArgParameters, depth);
+
+    CliSwitch(generalGid, 
         "Disables all the standard output, when writting a texture to a file", "q", "quiet", 
-        CliParamType::Bool, offsetof(ArgParameters, quiet)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Bool, ArgParameters, quiet);
+
+    CliSwitch(generalGid,
         "Disables the progress bar output", "g", "disable_progbar", 
-        CliParamType::Bool, offsetof(ArgParameters, disableProgbar)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Bool, ArgParameters, disableProgbar);
+
+    CliSwitch(generalGid,
         "Streams the texture file through the standard output. Only binary data is output. "
         "When enabled this program automatically goes into quiet mode.", "p", "pipe", 
-        CliParamType::Bool, offsetof(ArgParameters, pipe)
-    )))
-    Check(p.addParam(generalGid, ClParser::ParamData(
+        Bool, ArgParameters, pipe);
+
+    CliSwitch(generalGid, 
         "Number of software threads to utilize for computation (default is 16)",
         "t", "threads", 
-        CliParamType::Bool, offsetof(ArgParameters, threadCount)
-    )))
+        Bool, ArgParameters, threadCount);
 
-    ClParser::GroupId channelGid = p.createGroup("Channel", "Channel parameters:");
-    Check(p.addParam(channelGid, ClParser::ParamData(
-        "Sets the channel for which all the following channel parameters will affect.\n"
-        "\tFor example, doing -cR means that we activate red channel and all the following\n"
-        "\tchannel switches will affect such channel.\n"
-        "\tWhen the command line encounters a new -cG then it will switch to Green, and so on.",
-        "c", "channel",
-        CliParamType::String, offsetof(ChannelParametes, channelName), { "R", "r", "red", "G", "g", "green", "B", "b", "blue", "A", "a", "alpha", "x", "y", "z", "w" },
-        [objectPtr, &p](const ClParser::ParamData& paramData, ClParser::GroupId gid, const void* value){
+    std::vector<std::string> channelEnumNames = { "R", "r", "red", "G", "g", "green", "B", "b", "blue", "A", "a", "alpha", "x", "y", "z", "w" };
+    auto onChannelSet = [objectPtr, &p](const ClParser::ParamData& paramData, ClParser::GroupId gid, const void* value){
             std::string choice = (const char*)value;
             int activeChannel = 0;
             if (choice == "R" || choice == "r" || choice == "x" || choice == "red")
@@ -133,19 +135,26 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
             else if (choice == "A" || choice == "a" || choice == "w" || choice == "alpha")
                 activeChannel = 3;
             objectPtr->channels[activeChannel].enabled = true;
-            p.bind(gid, &objectPtr->channels[activeChannel]);
-        }
-    )))
-    Check(p.addParam(channelGid, ClParser::ParamData(
+            p.bind(gid, &objectPtr->channels[activeChannel]);};
+
+    CliSwitchAction(channelGid,
+        "Sets the channel for which all the following channel parameters will affect.\n"
+        "\tFor example, doing -cR means that we activate red channel and all the following\n"
+        "\tchannel switches will affect such channel.\n"
+        "\tWhen the command line encounters a new -cG then it will switch to Green, and so on.",
+        "c", "channel",
+        String, ChannelParametes, channelName, channelEnumNames, onChannelSet);
+
+    CliSwitch(channelGid,
         "Random number seed utilized, for deterministic generation of noise.", "s", "seed", 
-        CliParamType::Int, offsetof(ChannelParametes, seed)
-    )))
-    Check(p.addParam(channelGid, ClParser::ParamData(
+        Int, ChannelParametes, seed);
+
+    std::vector<std::string> noiseTypes = { BLUE_TYPE, WHITE_TYPE };
+    CliSwitchAction(channelGid,
         "Sets the noise type on the particular active channel.",
         "n", "noise", 
-        CliParamType::String, offsetof(ChannelParametes, noiseType),
-        { BLUE_TYPE, WHITE_TYPE }, nullptr
-    )))
+        String, ChannelParametes, noiseType,
+        noiseTypes, nullptr);
 
     return true;
 }
