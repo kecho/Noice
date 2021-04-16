@@ -35,6 +35,11 @@ public:
         m_userData = userData;
     }
 
+    void attachStopwatchObject(Stopwatch* stopwatch)
+    {
+        m_stopwatchObject = stopwatch;
+    }
+
     void dispatchEvent()
     {
         EventArguments args = { m_userData };
@@ -42,10 +47,14 @@ public:
     }
 
 private:
+    //pixel support vector
     std::vector<float> m_support;
     ispc::Image m_img;
+
+    //attachments
     EventCallback m_eventCb = nullptr;
     void* m_userData = nullptr;
+    Stopwatch* m_stopwatchObject = nullptr;
 };
 
 }

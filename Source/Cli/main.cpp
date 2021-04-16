@@ -164,7 +164,7 @@ ReturnCodes work(const ArgParameters& parameters)
             bnd.seed = (unsigned)channelParmeters.seed;
             bnd.rho2 = channelParmeters.rho2;
             currentHandle = noice::createTextureComponent();
-            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
+            noice::Error err = generateBlueNoise(currentHandle, bnd, parameters.threadCount);
             if (err != noice::Error::Ok)
             {
                 std::cerr << "Generator error" << noice::getErrorString(err);

@@ -3,6 +3,10 @@
 namespace noice
 {
 
+//////////////////////////////////
+// Support types for main  API  //
+//////////////////////////////////
+
 class OutputStream
 {
 public:
@@ -52,20 +56,34 @@ struct TextureFileDesc
     TextureComponentHandle channels[4] = {};
 };
 
+//////////////////////////////////////
+// Main API to build noise textures //
+//////////////////////////////////////
+
 TextureComponentHandle createTextureComponent();
 void deleteComponent(TextureComponentHandle& component);
-Error generateBlueNoise     (const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle component);
+Error generateBlueNoise     (TextureComponentHandle component, const BlueNoiseGenDesc& desc, int threadCount);
 Error saveTextureToFile     (const TextureFileDesc& desc);
 Error saveTextureToStream   (const TextureFileDesc& desc, OutputStream& outStream);
 
-//event handles, to track progress or even cancel jobs.
+
+////////////////////////////////////////////////////////
+//Attachments to texture components for various things//
+////////////////////////////////////////////////////////
+
 struct EventArguments
 {
     void* userData;
 };
 
 typedef void (*EventCallback)(const EventArguments&);
-void attachEventHandle(EventCallback callback, void* userData, TextureComponentHandle handle);
+void attachEventHandle(TextureComponentHandle handle, EventCallback callback, void* userData);
+
+struct Stopwatch
+{
+    unsigned int microseconds = 0ull;
+};
+void attachStopwatch(TextureComponentHandle handle, Stopwatch* stopwatchObject);
 
 
 }

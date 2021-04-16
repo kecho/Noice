@@ -81,7 +81,7 @@ TextureComponentHandle createTextureComponent()
     return img->asHandle();
 }
 
-Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureComponentHandle component)
+Error generateBlueNoise(TextureComponentHandle component, const BlueNoiseGenDesc& desc, int threadCount)
 {
     if (component.opaquePtr == nullptr)
         return Error::HandleIsNull;
@@ -162,13 +162,22 @@ void deleteComponent(TextureComponentHandle& component)
     component = TextureComponentHandle();
 }
 
-void attachEventCallback(EventCallback callback, void* userData, TextureComponentHandle component)
+void attachEventCallback(TextureComponentHandle component, EventCallback callback, void* userData)
 {
     if (component.opaquePtr == nullptr)
         return;
 
     Image* img = Image::get(component);
     img->attachEventCb(callback, userData);
+}
+
+void attachStopwatch(TextureComponentHandle component, Stopwatch* stopwatchObject)
+{
+    if (component.opaquePtr == nullptr)
+        return;
+
+    Image* img = Image::get(component);
+    img->attachStopwatchObject(stopwatchObject);
 }
 
 }
