@@ -120,7 +120,7 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
     CliSwitch(generalGid, 
         "Number of software threads to utilize for computation (default is 16)",
         "t", "threads", 
-        Bool, ArgParameters, threadCount);
+        Uint, ArgParameters, threadCount);
 
     std::vector<std::string> channelEnumNames = { "R", "r", "red", "G", "g", "green", "B", "b", "blue", "A", "a", "alpha", "x", "y", "z", "w" };
     auto onChannelSet = [objectPtr, &p](const ClParser::ParamData& paramData, ClParser::GroupId gid, const void* value){
@@ -216,8 +216,12 @@ ReturnCodes work(const ArgParameters& parameters)
                 progressInfo.msgPrefix = channelNames[i];
                 stopwatch = {};
                 noice::attachEventCallback(currentHandle, &printProgress, &progressInfo, 300);
+                std::cout << std::endl;
             }
-            noice::attachStopwatch(currentHandle, &stopwatch);
+
+            if (!parameters.quiet)
+                noice::attachStopwatch(currentHandle, &stopwatch);
+
             noice::Error err = generateBlueNoise(currentHandle, bnd, parameters.threadCount);
             if (err != noice::Error::Ok)
             {
@@ -225,7 +229,9 @@ ReturnCodes work(const ArgParameters& parameters)
                 return ReturnCodes::InternalError;
             }
 
-            std::cout << "time: " << (float)stopwatch.microseconds / (1000.0f*1000.0f) << " seconds" << std::endl;
+            if (!parameters.quiet)
+                std::cout << " " << channelNames[i] << " channel finished, time: " << (float)stopwatch.microseconds / (1000.0f*1000.0f) << " seconds" << std::endl;
+
             usedHandles.push_back(currentHandle);
         }
     }
