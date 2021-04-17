@@ -12,7 +12,9 @@ namespace noice
 class DistanceKernel
 {
 public:
+
     inline void operator()(
+        int jobId,
         int x0, int y0,
         int x1, int y1, int z, ispc::Image& image)
     {
@@ -22,13 +24,14 @@ public:
             z, m_w, m_h, m_d, m_rho2, image);
     }
 
-    inline void init(float rho2, int w, int h, int d)
+    inline void init(int w, int h, int d, int threadCount)
     {
         m_w = w;
         m_h = h;
         m_d = d;
-        m_rho2 = rho2;
     }
+    
+    inline void setRho2(float rho2) { m_rho2 = rho2; }
 
     inline void args(int px, int py, int pz)
     {
@@ -63,7 +66,7 @@ static Error blueNoiseGeneratorTemplate(
 
     SimdSearcher searcher(desc.width, desc.height, desc.depth, desc.seed, threadCount);
     KernelRunner<DistanceKernel> distanceKernel(desc.width, desc.height, desc.depth, threadCount);
-    distanceKernel.kernel().init(desc.rho2, desc.width, desc.height, desc.depth);
+    distanceKernel.kernel().setRho2(desc.rho2);
 
     noice::Image distancePixels;
     distancePixels.init(desc.width, desc.height, desc.depth);

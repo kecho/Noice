@@ -11,6 +11,7 @@ class EnumKernel
 {
 public:
     inline void operator()(
+        int jobId,
         int x0, int y0,
         int x1, int y1, int z, ispc::Image& image)
     {
@@ -19,7 +20,7 @@ public:
             m_w, m_h, m_d, image);
     }
 
-    inline void init(int w, int h, int d)
+    inline void init(int w, int h, int d, int threadCount)
     {
         m_w = w;
         m_h = h;
@@ -47,7 +48,6 @@ Error whiteNoiseGenerator(
     //initialize values in simd
     {
         KernelRunner<EnumKernel> enumKernel(desc.width, desc.height, desc.depth, threadCount);
-        enumKernel.kernel().init(desc.width, desc.height, desc.depth);
         enumKernel.run(output.img());
     }
 

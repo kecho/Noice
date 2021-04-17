@@ -16,6 +16,7 @@ enum class ReturnCodes : int
 
 #define BLUE_TYPE "blue"
 #define WHITE_TYPE "white"
+#define PERLIN_TYPE "perlin"
 
 bool isAlias(std::string name, const char** aliases)
 {
@@ -150,7 +151,7 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         "Random number seed utilized, for deterministic generation of noise.", "s", "seed", 
         Int, ChannelParametes, seed);
 
-    std::vector<std::string> noiseTypes = { BLUE_TYPE, WHITE_TYPE };
+    std::vector<std::string> noiseTypes = { BLUE_TYPE, WHITE_TYPE, PERLIN_TYPE };
     CliSwitchAction(channelGid,
         "Sets the noise type on the particular active channel.",
         "n", "noise", 
@@ -220,22 +221,31 @@ ReturnCodes work(const ArgParameters& parameters)
         noice::Error err = noice::Error::Ok;
         if (noiseType == BLUE_TYPE) 
         {
-            noice::BlueNoiseGenDesc bnd;
-            bnd.width  = (int)parameters.width;
-            bnd.height = (int)parameters.height;
-            bnd.depth  = (int)parameters.depth;
-            bnd.seed = (unsigned)channelParmeters.seed;
-            bnd.rho2 = channelParmeters.rho2;
-            err = generateBlueNoise(currentHandle, bnd, parameters.threadCount);
+            noice::BlueNoiseGenDesc desc;
+            desc.width  = (int)parameters.width;
+            desc.height = (int)parameters.height;
+            desc.depth  = (int)parameters.depth;
+            desc.seed = (unsigned)channelParmeters.seed;
+            desc.rho2 = channelParmeters.rho2;
+            err = generateBlueNoise(currentHandle, desc, parameters.threadCount);
         }
         else if (noiseType == WHITE_TYPE)
         {
-            noice::WhiteNoiseGenDesc wnd;
-            wnd.width  = (int)parameters.width;
-            wnd.height = (int)parameters.height;
-            wnd.depth  = (int)parameters.depth;
-            wnd.seed = (unsigned)channelParmeters.seed;
-            err = generateWhiteNoise(currentHandle, wnd, parameters.threadCount);
+            noice::WhiteNoiseGenDesc desc;
+            desc.width  = (int)parameters.width;
+            desc.height = (int)parameters.height;
+            desc.depth  = (int)parameters.depth;
+            desc.seed = (unsigned)channelParmeters.seed;
+            err = generateWhiteNoise(currentHandle, desc, parameters.threadCount);
+        }
+        else if (noiseType == PERLIN_TYPE)
+        {
+            noice::PerlinNoiseGenDesc desc;
+            desc.width  = (int)parameters.width;
+            desc.height = (int)parameters.height;
+            desc.depth  = (int)parameters.depth;
+            desc.seed = (unsigned)channelParmeters.seed;
+            err = generatePerlinNoise(currentHandle, desc, parameters.threadCount);
         }
 
         if (!parameters.quiet)

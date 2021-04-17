@@ -19,7 +19,7 @@ export void EnumerationKernel(
 		foreach(x=x0...x1)
         {
             float id = idOffset + x; 
-			row[x] += id / totalPixelCountF;
+			row[x] = id / totalPixelCountF;
         }
     }
 }

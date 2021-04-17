@@ -5,11 +5,11 @@
 #include "Image.h"
 #include "BlueNoiseGenerator.h"
 #include "WhiteNoiseGenerator.h"
+#include "PerlinNoiseGenerator.h"
 #include "ImageStream.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <io.h>
-
 
 namespace noice
 {
@@ -104,6 +104,18 @@ Error generateWhiteNoise(TextureComponentHandle component, const WhiteNoiseGenDe
         return Error::CorruptedHandle;
 
     return whiteNoiseGenerator(desc, threadCount, *img);
+}
+
+Error generatePerlinNoise(TextureComponentHandle component, const PerlinNoiseGenDesc& desc, int threadCount)
+{
+    if (component.opaquePtr == nullptr)
+        return Error::HandleIsNull;
+
+    Image* img = Image::get(component);
+    if (img == nullptr)
+        return Error::CorruptedHandle;
+
+    return perlinNoiseGenerator(desc, threadCount, *img);
 }
 
 static bool isValidFileName(const TextureFileDesc& desc)

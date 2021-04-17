@@ -18,9 +18,12 @@ public:
     KernelRunner(int w, int h, int d, int threadCount)
     : m_w(w), m_h(h), m_d(d)
     {
+        kernel().init(w, h, d, threadCount);
+
         int tileH = divUp<int>(h, threadCount);
         int yOffset = 0;
         int heightLeft = h;
+        int nextJobId = 0;
         for (int tY = 0; tY < threadCount && heightLeft > 0; ++tY)
         {
             int jobSzH = std::min(tileH, heightLeft);
@@ -28,6 +31,7 @@ public:
 
             m_jobContexts.emplace_back();
             JobContext& jc = m_jobContexts.back();
+            jc.jobId = nextJobId++;
             jc.x0 = 0;
             jc.x1 = m_w;
             jc.y0 = yOffset;
@@ -45,12 +49,12 @@ public:
         {
             if ((int)m_jobContexts.size() == 1)
             {
-                m_kernel(0, 0, m_w, m_h, d, image);
+                m_kernel(0, 0, 0, m_w, m_h, d, image);
                 continue;
             }
 
             std::for_each(std::execution::par, m_jobContexts.begin(), m_jobContexts.end(), [this, &d, &image](JobContext& j) {
-                m_kernel(j.x0, j.y0, j.x1, j.y1, d, image);
+                m_kernel(j.jobId, j.x0, j.y0, j.x1, j.y1, d, image);
             });
         }
     }
@@ -58,12 +62,11 @@ public:
 private:
     struct JobContext
     {
+        int jobId;
         int x0;
         int x1;
         int y0;
         int y1;
-        int offset;
-        int size;
     };
 
     std::vector<JobContext> m_jobContexts;

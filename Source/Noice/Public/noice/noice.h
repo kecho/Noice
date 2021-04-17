@@ -58,6 +58,14 @@ struct WhiteNoiseGenDesc
     unsigned seed = 0xdeadbeef;
 };
 
+struct PerlinNoiseGenDesc
+{
+    int width  = 64;
+    int height = 64;
+    int depth  = 1;
+    unsigned seed = 0xdeadbeef;
+};
+
 struct TextureFileDesc
 {
     const char* filename = nullptr;
@@ -70,8 +78,9 @@ struct TextureFileDesc
 
 TextureComponentHandle createTextureComponent();
 void deleteComponent(TextureComponentHandle& component);
-Error generateWhiteNoise    (TextureComponentHandle component, const WhiteNoiseGenDesc& desc, int threadCount);
-Error generateBlueNoise     (TextureComponentHandle component, const BlueNoiseGenDesc& desc, int threadCount);
+Error generateWhiteNoise    (TextureComponentHandle component, const WhiteNoiseGenDesc& desc,  int threadCount);
+Error generateBlueNoise     (TextureComponentHandle component, const BlueNoiseGenDesc& desc,   int threadCount);
+Error generatePerlinNoise   (TextureComponentHandle component, const PerlinNoiseGenDesc& desc, int threadCount);
 Error saveTextureToFile     (const TextureFileDesc& desc);
 Error saveTextureToStream   (const TextureFileDesc& desc, OutputStream& outStream);
 
