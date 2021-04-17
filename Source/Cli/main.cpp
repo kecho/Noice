@@ -81,6 +81,7 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
     ClParser::GroupId channelGid = p.createGroup("Channel", "Channel parameters:");
 
     p.bind(generalGid, objectPtr);
+    p.bind(channelGid, &objectPtr->channels);
 
     CliSwitch(generalGid, 
         "Print help dialog.",
@@ -201,6 +202,14 @@ ReturnCodes work(const ArgParameters& parameters)
             continue;
 
         std::string noiseType = channelParmeters.noiseType;
+        currentHandle = noice::createTextureComponent();
+        if (!parameters.quiet && !parameters.disableProgbar)
+        {
+            progressInfo.msgPrefix = channelNames[i];
+            noice::attachEventCallback(&printProgress, &progressInfo, 300, currentHandle);
+        }
+
+        noice::Error err = noice::Error::Ok;
         if (noiseType == BLUE_TYPE) 
         {
             noice::BlueNoiseGenDesc bnd;
@@ -209,21 +218,25 @@ ReturnCodes work(const ArgParameters& parameters)
             bnd.depth  = (int)parameters.depth;
             bnd.seed = (unsigned)channelParmeters.seed;
             bnd.rho2 = channelParmeters.rho2;
-            currentHandle = noice::createTextureComponent();
-            if (!parameters.quiet && !parameters.disableProgbar)
-            {
-                progressInfo.msgPrefix = channelNames[i];
-                noice::attachEventCallback(&printProgress, &progressInfo, 300, currentHandle);
-            }
-            noice::Error err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
-            if (err != noice::Error::Ok)
-            {
-                std::cerr << "Generator error" << noice::getErrorString(err);
-                return ReturnCodes::InternalError;
-            }
-
-            usedHandles.push_back(currentHandle);
+            err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
         }
+        else if (noiseType == WHITE_TYPE)
+        {
+            noice::WhiteNoiseGenDesc wnd;
+            wnd.width  = (int)parameters.width;
+            wnd.height = (int)parameters.height;
+            wnd.depth  = (int)parameters.depth;
+            wnd.seed = (unsigned)channelParmeters.seed;
+            err = generateWhiteNoise(wnd, parameters.threadCount, currentHandle);
+        }
+
+        if (err != noice::Error::Ok)
+        {
+            std::cerr << "Generator error" << noice::getErrorString(err);
+            return ReturnCodes::InternalError;
+        }
+
+        usedHandles.push_back(currentHandle);
     }
 
     noice::Error err = saveTextureToFile(outDesc);

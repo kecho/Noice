@@ -4,6 +4,7 @@
 #include <chrono>
 #include "Image.h"
 #include "BlueNoiseGenerator.h"
+#include "WhiteNoiseGenerator.h"
 #include "ImageStream.h"
 #include <stdio.h>
 #include <fcntl.h>
@@ -91,6 +92,18 @@ Error generateBlueNoise(const BlueNoiseGenDesc& desc, int threadCount, TextureCo
         return Error::CorruptedHandle;
 
     return blueNoiseGenerator(desc, threadCount, *img);
+}
+
+Error generateWhiteNoise(const WhiteNoiseGenDesc& desc, int threadCount, TextureComponentHandle component)
+{
+    if (component.opaquePtr == nullptr)
+        return Error::HandleIsNull;
+
+    Image* img = Image::get(component);
+    if (img == nullptr)
+        return Error::CorruptedHandle;
+
+    return whiteNoiseGenerator(desc, threadCount, *img);
 }
 
 static bool isValidFileName(const TextureFileDesc& desc)
