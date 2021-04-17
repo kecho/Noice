@@ -94,7 +94,7 @@ Error generateBlueNoise(TextureComponentHandle component, const BlueNoiseGenDesc
     return blueNoiseGenerator(desc, threadCount, *img);
 }
 
-Error generateWhiteNoise(const WhiteNoiseGenDesc& desc, int threadCount, TextureComponentHandle component)
+Error generateWhiteNoise(TextureComponentHandle component, const WhiteNoiseGenDesc& desc, int threadCount)
 {
     if (component.opaquePtr == nullptr)
         return Error::HandleIsNull;

@@ -1,6 +1,7 @@
 #pragma once
 #include <noice/noice.h>
 #include <Noice/DistanceKernel.ispc.h>
+#include <chrono>
 #include <vector>
 
 namespace noice
@@ -45,16 +46,22 @@ public:
     EventCallback getEventCb() const { return m_eventCb; }
     void* getEventUserData() const { return m_userData; }
     Stopwatch* getStopwatchObject() { return m_stopwatchObject; }
+    void startStopwatch();
+    void endStopwatch();
 
 private:
     //pixel support vector
     std::vector<float> m_support;
     ispc::Image m_img;
 
-    //attachments
+    //attachments for events
     int m_eventSampleFrequency = 0;
     EventCallback m_eventCb = nullptr;
     void* m_userData = nullptr;
+
+    //attachment for stopwatch
+    using TimeType = std::chrono::time_point<std::chrono::high_resolution_clock>;
+    TimeType m_timeStart = {};
     Stopwatch* m_stopwatchObject = nullptr;
 };
 

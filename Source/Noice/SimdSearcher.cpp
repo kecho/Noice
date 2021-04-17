@@ -73,7 +73,7 @@ const ispc::PixelState& SimdSearcher::findMin(ispc::Image& distanceImg, SimdSear
     int offsetHalf = offset >> 1;
     int selectedOutput = 0;
     for (int mipIt = 0, mipPixelCount = pixelCount; mipPixelCount > 1; ++mipIt, mipPixelCount >>= 1)
-    {
+   {
         selectedOutput = (mipIt + 1) & 0x1;
         ispc::PixelState* inputState = mipIt == 0 ? m_imgScatterState.data() + offset : m_tmpScatterStates[mipIt & 0x1].data() + offsetHalf;
         ispc::PixelState* outputState = m_tmpScatterStates[selectedOutput].data() + offsetHalf;

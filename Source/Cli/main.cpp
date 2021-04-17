@@ -226,7 +226,7 @@ ReturnCodes work(const ArgParameters& parameters)
             bnd.depth  = (int)parameters.depth;
             bnd.seed = (unsigned)channelParmeters.seed;
             bnd.rho2 = channelParmeters.rho2;
-            err = generateBlueNoise(bnd, parameters.threadCount, currentHandle);
+            err = generateBlueNoise(currentHandle, bnd, parameters.threadCount);
         }
         else if (noiseType == WHITE_TYPE)
         {
@@ -235,7 +235,7 @@ ReturnCodes work(const ArgParameters& parameters)
             wnd.height = (int)parameters.height;
             wnd.depth  = (int)parameters.depth;
             wnd.seed = (unsigned)channelParmeters.seed;
-            err = generateWhiteNoise(wnd, parameters.threadCount, currentHandle);
+            err = generateWhiteNoise(currentHandle, wnd, parameters.threadCount);
         }
 
         if (!parameters.quiet)

@@ -3,7 +3,6 @@
 #include <Noice/DistanceKernel.ispc.h>
 #include <vector>
 #include <iostream>
-#include <chrono>
 #include "KernelRunner.h"
 #include "SimdSearcher.h"
 
@@ -72,10 +71,7 @@ static Error blueNoiseGeneratorTemplate(
 
     ispc::PixelState currentPixel = {};
 
-    Stopwatch* stopwatch = output.getStopwatchObject();
-    TimeType timeStart = {};
-    if (stopwatch)
-        timeStart = std::chrono::high_resolution_clock::now();
+    output.startStopwatch();
     
     EventArguments callbackArgs;
     callbackArgs.userData = eventUserData;
@@ -107,9 +103,7 @@ static Error blueNoiseGeneratorTemplate(
         }
     }
 
-    if (stopwatch)
-        stopwatch->microseconds = (unsigned int)std::chrono::duration_cast<std::chrono::microseconds>
-            (std::chrono::high_resolution_clock::now() - timeStart).count();
+    output.endStopwatch();
 
     if (useEventCallback)
     {

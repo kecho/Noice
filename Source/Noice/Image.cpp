@@ -16,4 +16,21 @@ namespace noice
         for (float& f : m_support)
             f = value;
     }
+
+    void Image::startStopwatch()
+    {
+        if (!m_stopwatchObject)
+            return;
+        m_timeStart = std::chrono::high_resolution_clock::now();
+    }
+
+    void Image::endStopwatch()
+    {
+        if (!m_stopwatchObject)
+            return;
+        
+        m_stopwatchObject->microseconds = (unsigned int)std::chrono::duration_cast<std::chrono::microseconds>
+            (std::chrono::high_resolution_clock::now() - m_timeStart).count();
+    }
+
 }
