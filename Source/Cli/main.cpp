@@ -121,7 +121,7 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
     CliSwitch(generalGid, 
         "Number of software threads to utilize for computation (default is 16)",
         "t", "threads", 
-        Bool, ArgParameters, threadCount);
+        Uint, ArgParameters, threadCount);
 
     std::vector<std::string> channelEnumNames = { "R", "r", "red", "G", "g", "green", "B", "b", "blue", "A", "a", "alpha", "x", "y", "z", "w" };
     auto onChannelSet = [objectPtr, &p](const ClParser::ParamData& paramData, ClParser::GroupId gid, const void* value){
@@ -194,6 +194,7 @@ ReturnCodes work(const ArgParameters& parameters)
     std::vector<noice::TextureComponentHandle> usedHandles;
     ProgressInfo progressInfo;
     progressInfo.maxPixels = (float)parameters.width * parameters.height * parameters.depth;
+    noice::Stopwatch stopwatch = {};
     for (int i = 0; i < 4; ++i)
     {
         const ChannelParametes& channelParmeters = parameters.channels[i];
@@ -206,7 +207,14 @@ ReturnCodes work(const ArgParameters& parameters)
         if (!parameters.quiet && !parameters.disableProgbar)
         {
             progressInfo.msgPrefix = channelNames[i];
-            noice::attachEventCallback(&printProgress, &progressInfo, 300, currentHandle);
+            noice::attachEventCallback(currentHandle, &printProgress, &progressInfo, 300);
+            std::cout << std::endl;
+        }
+
+        if (!parameters.quiet)
+        {
+            stopwatch = {};
+            noice::attachStopwatch(currentHandle, &stopwatch);
         }
 
         noice::Error err = noice::Error::Ok;
@@ -229,6 +237,9 @@ ReturnCodes work(const ArgParameters& parameters)
             wnd.seed = (unsigned)channelParmeters.seed;
             err = generateWhiteNoise(wnd, parameters.threadCount, currentHandle);
         }
+
+        if (!parameters.quiet)
+            std::cout << " " << channelNames[i] << " channel finished, time: " << (float)stopwatch.microseconds / (1000.0f*1000.0f) << " seconds" << std::endl;
 
         if (err != noice::Error::Ok)
         {
@@ -303,7 +314,15 @@ int main(int argc, char* argv[])
 
     if (!parameters.quiet)
     {
-        std::cout << "Generating '" << parameters.outputName << "'" << std::endl;
+        std::cout << "Generating " << parameters.width << "x" << parameters.height;
+        if (parameters.depth > 1) 
+            std::cout << "x" << parameters.depth;
+        std::cout << " [";
+        std::cout << (parameters.channels[0].enabled ? "r" : "")
+            << (parameters.channels[1].enabled ? "g" : "")
+            << (parameters.channels[2].enabled ? "b" : "")
+            << (parameters.channels[3].enabled ? "a" : "");
+        std::cout << "] - " << parameters.outputName << std::endl;
     }
 
     return (int)work(parameters);

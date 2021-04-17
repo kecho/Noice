@@ -36,16 +36,26 @@ public:
         m_userData = userData;
     }
 
+    void attachStopwatchObject(Stopwatch* stopwatch)
+    {
+        m_stopwatchObject = stopwatch;
+    }
+
     int getEventFrequency() const { return m_eventSampleFrequency; }
     EventCallback getEventCb() const { return m_eventCb; }
     void* getEventUserData() const { return m_userData; }
+    Stopwatch* getStopwatchObject() { return m_stopwatchObject; }
 
 private:
+    //pixel support vector
     std::vector<float> m_support;
     ispc::Image m_img;
+
+    //attachments
     int m_eventSampleFrequency = 0;
     EventCallback m_eventCb = nullptr;
     void* m_userData = nullptr;
+    Stopwatch* m_stopwatchObject = nullptr;
 };
 
 }
