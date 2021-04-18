@@ -5,6 +5,7 @@ export void PerlinKernel(
     uniform int x1, uniform int y1,
     uniform int z,
     uniform int width, uniform int height, uniform int depth,
+    uniform float finalWeight,
     const uniform Image& directions,
     uniform Image& output)
 {
@@ -55,8 +56,8 @@ export void PerlinKernel(
                 float d01 = lerp(d0, d1, txy.x);
                 float d23 = lerp(d2, d3, txy.x);
                 
-                float noiseValue = lerp(d01, d23, txy.y);
-                row[x] = noiseValue * 0.5 + 0.5;
+                float noiseValue = lerp(d01, d23, txy.y) * finalWeight;
+                row[x] += noiseValue;
             }
         }
     }
@@ -127,9 +128,9 @@ export void PerlinKernel(
                 float d123 = lerp(d[6], d[7], txyz.x);
                 float d1 = lerp(d101, d123, txyz.y);
 
-                float noiseValue = lerp(d0, d1, txyz.z);
+                float noiseValue = lerp(d0, d1, txyz.z) * finalWeight;
 
-                row[x] = noiseValue * 0.5 + 0.5;
+                row[x] += noiseValue;
             }
         }
     }

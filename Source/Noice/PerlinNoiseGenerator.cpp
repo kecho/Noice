@@ -66,16 +66,18 @@ public:
     {
         ispc::PerlinKernel(
             x0, y0, x1, y1, z,
-            m_w, m_h, m_d, *m_directions, image);
+            m_w, m_h, m_d, m_weight, *m_directions, image);
     }
 
-    inline void setDirection(const ispc::Image& directions)
+    inline void setParameters(float weight, const ispc::Image& directions)
     {
+        m_weight = weight;
         m_directions = &directions;
     }
 
 private:
     const ispc::Image* m_directions = nullptr;
+    float m_weight = 1.0f;
     int m_w = 0;
     int m_h = 0;
     int m_d = 0;
@@ -89,36 +91,64 @@ Error perlinNoiseGenerator(
     Error result = Error::Ok;
     output.init(desc.width, desc.height, desc.depth);
     output.startStopwatch();
+    output.clear(0.0f); 
     EventArguments callbackArgs;
     callbackArgs.userData = output.getEventUserData();
 
-    float frequency = 4.0f;
-    int gridWidth  = (int)std::ceil(frequency);
-    int gridHeight = (int)std::ceil(frequency);
-    int gridDepth  = (int)std::ceil(desc.depth > 1 ? frequency : 1);
-
-    Image randomDirectionsImg;
+    float frequencies[] = { 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f };
+    float weights[]     = { 0.5f, 0.3f, 0.2f, 0.1f, 0.05f, 0.02f };
+    int freqCounts = sizeof(frequencies)/sizeof(frequencies[0]);
+    for (int i = 0; i < freqCounts; ++i)
     {
-        WhiteNoiseGenDesc whiteNoiseDesc;
-        Image scrambleTexture;
-        whiteNoiseDesc.width  = gridWidth;
-        whiteNoiseDesc.height = gridHeight;
-        whiteNoiseDesc.depth  = gridDepth;
-        whiteNoiseDesc.seed   = desc.seed;
-        result = whiteNoiseGenerator(whiteNoiseDesc, threadCount, scrambleTexture);
-        if (result != Error::Ok)
-            return result;
-        randomDirectionsImg.init(gridWidth, gridHeight, gridDepth, 4);
-        KernelRunner<DirectionKernel> randDirKernel(gridWidth, gridHeight, gridDepth, threadCount);
-        randDirKernel.kernel().setScrambleTexture(scrambleTexture.img());
-        randDirKernel.run(randomDirectionsImg.img());
+        float weight = weights[i];
+        float frequency = frequencies[i];
+        int gridWidth  = (int)std::ceil(frequency);
+        int gridHeight = (int)std::ceil(frequency);
+        int gridDepth  = (int)std::ceil(desc.depth > 1 ? frequency : 1);
+    
+        Image randomDirectionsImg;
+        {
+            WhiteNoiseGenDesc whiteNoiseDesc;
+            Image scrambleTexture;
+            whiteNoiseDesc.width  = gridWidth;
+            whiteNoiseDesc.height = gridHeight;
+            whiteNoiseDesc.depth  = gridDepth;
+            whiteNoiseDesc.seed   = desc.seed;
+            result = whiteNoiseGenerator(whiteNoiseDesc, threadCount, scrambleTexture);
+            if (result != Error::Ok)
+                return result;
+            randomDirectionsImg.init(gridWidth, gridHeight, gridDepth, 4);
+            KernelRunner<DirectionKernel> randDirKernel(gridWidth, gridHeight, gridDepth, threadCount);
+            randDirKernel.kernel().setScrambleTexture(scrambleTexture.img());
+            randDirKernel.run(randomDirectionsImg.img());
+        }
+    
+        {
+            KernelRunner<PerlinKernel> perlinKernel(desc.width, desc.height, desc.depth, threadCount);
+            perlinKernel.kernel().setParameters(weight, randomDirectionsImg.img());
+            perlinKernel.run(output.img());
+        }
     }
 
+    if (output.pixelCount() > 0)
     {
-        KernelRunner<PerlinKernel> perlinKernel(desc.width, desc.height, desc.depth, threadCount);
-        perlinKernel.kernel().setDirection(randomDirectionsImg.img());
-        perlinKernel.run(output.img());
+        ispc::Image& outImg = output.img();
+        float minVal = outImg.data[0];
+        float maxVal = minVal;
+        for (int i = 1; i < output.pixelCount(); ++i)
+        {
+            float pixelVal = outImg.data[i];
+            minVal = std::min(minVal, pixelVal);
+            maxVal = std::max(maxVal, pixelVal);
+        }
+        float range = 1.0f / (maxVal - minVal);
+        for (int i = 1; i < output.pixelCount(); ++i)
+        {
+            float pixelVal = outImg.data[i];
+            outImg.data[i] = (pixelVal - minVal) * range;
+        }
     }
+
 
     if (output.getEventCb() != nullptr)
     {
