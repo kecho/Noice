@@ -212,24 +212,15 @@ struct Image
 inline void linearSample2dInfo(
     const uniform Image& image,
     varying float2 uv,
-    varying float4& weights,
-    varying float2& weightsDims,
+    varying float2& weights,
     varying int4& offsets)
 {
     float2 minBox = (uv - image.halfTexelSize.xy) * image.dimensions.xy;
     float2 maxBox = minBox + 1.0f;
     float2 minBoxId = floor_f2(minBox);
     float2 maxBoxId = floor_f2(maxBox);
-    const float2 one_f2 = { 1.0f, 1.0f };
-    float2 minBoxFrac = one_f2 - (minBox - minBoxId);
-    float2 maxBoxFrac = maxBox - maxBoxId;
+    weights = maxBox - maxBoxId;
 
-    weightsDims = maxBoxFrac;
-    weights.x = minBoxFrac.x * minBoxFrac.y;
-    weights.y = maxBoxFrac.x * minBoxFrac.y;
-    weights.z = minBoxFrac.x * maxBoxFrac.y;
-    weights.w = maxBoxFrac.x * maxBoxFrac.y;
-    
     int2 minBoxIdI = (int2)minBoxId;
     if (minBoxIdI.x < 0)
         minBoxIdI.x += image.width;
@@ -253,29 +244,18 @@ inline void linearSample2dInfo(
     offsets.w = p3.x + p3.y*image.width;
 }
 
-
 inline void linearSample3dInfo(
-    const Image& image, float3 uvw,
-    float4& weights0, float4& weights1,
-    int4& offsets0, int4& offsets1)
+    const uniform Image& image,
+    varying float3 uvw,
+    varying float3& weights,
+    varying int4& offsets0, varying int4& offsets1)
 {
     float3 minBox = (uvw - image.halfTexelSize.xyz) * image.dimensions.xyz;
-    float3 maxBox = (uvw + image.halfTexelSize.xyz) * image.dimensions.xyz;
+    float3 maxBox = minBox + 1.0f;
     float3 minBoxId = floor_f3(minBox);
     float3 maxBoxId = floor_f3(maxBox);
-    const float3 one_f3 = { 1.0f, 1.0f, 1.0f };
-    float3 minBoxFrac = one_f3 - (minBox - minBoxId);
-    float3 maxBoxFrac = maxBox - maxBoxId;
+    weights = maxBox - maxBoxId;
 
-    weights0.x = minBoxFrac.x * minBoxFrac.y * minBoxFrac.z;
-    weights0.y = maxBoxFrac.x * minBoxFrac.y * minBoxFrac.z;
-    weights0.z = minBoxFrac.x * maxBoxFrac.y * minBoxFrac.z;
-    weights0.w = maxBoxFrac.x * maxBoxFrac.y * minBoxFrac.z;
-    weights1.x = minBoxFrac.x * minBoxFrac.y * maxBoxFrac.z;
-    weights1.y = maxBoxFrac.x * minBoxFrac.y * maxBoxFrac.z;
-    weights1.z = minBoxFrac.x * maxBoxFrac.y * maxBoxFrac.z;
-    weights1.w = maxBoxFrac.x * maxBoxFrac.y * maxBoxFrac.z;
-    
     int3 minBoxIdI = (int3)minBoxId;
     if (minBoxIdI.x < 0)
         minBoxIdI.x += image.width;

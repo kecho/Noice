@@ -92,11 +92,10 @@ Error perlinNoiseGenerator(
     EventArguments callbackArgs;
     callbackArgs.userData = output.getEventUserData();
 
-    float octave = 25.0f;
-    float octaveInv = 1.0f / octave;
-    int gridWidth  = (int)std::ceil((float)desc.width  * octaveInv);
-    int gridHeight = (int)std::ceil((float)desc.height * octaveInv);
-    int gridDepth  = (int)std::ceil((float)desc.depth  * octaveInv);
+    float frequency = 4.0f;
+    int gridWidth  = (int)std::ceil(frequency);
+    int gridHeight = (int)std::ceil(frequency);
+    int gridDepth  = (int)std::ceil(desc.depth > 1 ? frequency : 1);
 
     Image randomDirectionsImg;
     {
