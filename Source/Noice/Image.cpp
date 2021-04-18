@@ -2,12 +2,22 @@
 
 namespace noice
 {
-    void Image::init(int width, int height, int depth)
+    void Image::init(int width, int height, int depth, int channels)
     {
-        m_support.resize(width*height*depth);
+        m_support.resize(width*height*depth*channels);
         m_img.width = width;
         m_img.height = height;
         m_img.depth = depth;
+        m_img.channels = channels;
+        m_img.dimensions.v[0] = width;
+        m_img.dimensions.v[1] = height;
+        m_img.dimensions.v[2] = depth;
+        for (int i = 0; i < 3; ++i)
+        {
+            m_img.texelSize.v[i] = 1.0f / m_img.dimensions.v[i];
+            m_img.halfTexelSize.v[i] = 0.5f * m_img.texelSize.v[i];
+        }
+
         m_img.data = m_support.data();
     }
 

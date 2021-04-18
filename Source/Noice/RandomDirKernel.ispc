@@ -5,22 +5,42 @@ export void RandomDirKernel(
     uniform int x1, uniform int y1,
     uniform int z,
     uniform int width, uniform int height, uniform int depth,
-    uniform Image& whiteNoise,
+    const uniform Image& scrambleTexture,
     uniform Image& result)
 {
-    uniform int sliceOffset = z * width * height;
-    uniform float* dataPtr = result.data + 3*sliceOffset;
-    uniform float* whiteNoiseInput = whiteNoise.data + sliceOffset;
-	for (uniform uint y = y0; y < y1; ++y)
-	{
-        uniform int rowOffset = y*width;
-		float* row = dataPtr + 3*rowOffset;
-        float* whiteNoiseRow = whiteNoiseInput + rowOffset;
-
-		foreach(x=x0...x1)
-        {
-            #pragma ignore warning(perf)
-			row[3*x] = whiteNoiseRow[x];
+    if (result.channels == 2)
+    {
+        uniform int N = width * height;
+	    for (uniform uint y = y0; y < y1; ++y)
+	    {
+            uniform int rowOffset = y * width;
+	    	float4* row = (float4*)result.data + rowOffset;
+	    	foreach(x=x0...x1)
+            {
+                float texValue = scrambleTexture.data[rowOffset + x];
+                float2 value = discSample(0.1f);
+                #pragma ignore warning(perf)
+	    		row[x] = value.xyxy;
+            }
+        }
+    }
+    else
+    {
+        uniform int N = width * height * depth;
+        uniform int sliceOffset = z * width * height;
+	    for (uniform uint y = y0; y < y1; ++y)
+	    {
+            uniform int rowOffset = y * width + sliceOffset;
+	    	float4* row = (float4*)(result.data) + rowOffset;
+	    	foreach(x=x0...x1)
+            {
+                int pixelId = (int)(scrambleTexture.data[rowOffset + x] * (float)N + 0.5);
+                
+                float2 uv = hammersley2d(pixelId, N);
+                float3 value = sphereSample(uv.x, uv.y);
+                #pragma ignore warning(perf)
+	    		row[x] = value.xyzz;
+            }
         }
     }
 }

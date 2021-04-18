@@ -10,7 +10,7 @@ namespace noice
 class Image
 {
 public:
-    void init(int width, int height, int depth);
+    void init(int width, int height, int depth, int channels = 1);
     void clear(float value);
     ispc::Image& img() { return m_img; }
     const ispc::Image& img() const { return m_img; }

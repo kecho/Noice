@@ -5,6 +5,8 @@ typedef int32<2> int2;
 typedef float<2> float2;
 typedef int32<3> int3;
 typedef float<3> float3;
+typedef int32<4> int4;
+typedef float<4> float4;
 
 inline uint min_u(uint a, uint b)
 {
@@ -47,6 +49,16 @@ inline float dot_f3(float3 a, float3 b)
     return (a.x*b.x + b.y*a.y + a.z*b.z);
 }
 
+inline float distance_f2(float2 a, float2 b)
+{
+    return sqrt(dot_f2(a, b));
+}
+
+inline float2 normalize_f2(float2 a)
+{
+    return a / distance_f2(a, a);
+}
+
 inline uint2 min_u2(uint2 a, uint2 b)
 {
 	uint2 r = { min_u(a.x,b.x), min_u(a.y, b.y) }; 
@@ -86,6 +98,46 @@ inline int3 min_i3(int3 a, int3 b)
 inline float fract(float v)
 {
 	return abs_f(v) - (float)(abs_i((int)v));
+}
+
+inline float2 fract_f2(float2 v)
+{
+    float2 r = { fract(v.x), fract(v.y) };
+    return r;
+}
+
+inline float3 fract_f3(float3 v)
+{
+    float3 r = { fract(v.x), fract(v.y), fract(v.z) };
+    return r;
+}
+
+inline float2 floor_f2(float2 v)
+{
+    float2 r = { floor(v.x), floor(v.y) };
+    return r;
+}
+
+inline float3 floor_f3(float3 v)
+{
+    float3 r = { floor(v.x), floor(v.y), floor(v.z) };
+    return r;
+}
+
+inline float2 ceil_f2(float2 v)
+{
+    float2 r = { ceil(v.x), ceil(v.y) };
+    return r;
+}
+
+inline float3 ceil_f3(float3 v)
+{
+    float3 r = { ceil(v.x), ceil(v.y), ceil(v.z) };
+    return r;
+}
+
+inline float lerp(float a, float b, float t) {
+    return (1.-t)*a + t*b;
 }
 
 //Sampling utilities http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
@@ -132,6 +184,13 @@ inline float3 sphereSample(float u, float v)
     return ret;
 }
 
+inline float2 discSample(float u)
+{
+    float phi = u * 2.0 * PI;
+    float2 ret = { cos(phi), sin(phi) };
+    return ret;
+}
+
 // LCG values from Numerical Recipes
 inline uint irng(uint rng_state)
 {
@@ -143,6 +202,131 @@ struct Image
     uniform int width;
     uniform int height;
     uniform int depth;
+    uniform int channels;
+    uniform float4 dimensions;
+    uniform float4 texelSize;
+    uniform float4 halfTexelSize;
 	uniform float* data;
 };
+
+inline void linearSample2dInfoExtra(
+    const uniform Image& image,
+    varying float2 uv,
+    varying float4& weights,
+    varying float2& weightsDims,
+    varying int4& offsets,
+    varying int2 positions[4])
+{
+    float2 minBox = (uv - image.halfTexelSize.xy) * image.dimensions.xy;
+    float2 maxBox = (uv + image.halfTexelSize.xy) * image.dimensions.xy;
+    float2 minBoxId = floor_f2(minBox);
+    float2 maxBoxId = floor_f2(maxBox);
+    const float2 one_f2 = { 1.0f, 1.0f };
+    float2 minBoxFrac = one_f2 - (minBox - minBoxId);
+    float2 maxBoxFrac = maxBox - maxBoxId;
+
+    weightsDims = maxBoxFrac;
+    weights.x = minBoxFrac.x * minBoxFrac.y;
+    weights.y = maxBoxFrac.x * minBoxFrac.y;
+    weights.z = minBoxFrac.x * maxBoxFrac.y;
+    weights.w = maxBoxFrac.x * maxBoxFrac.y;
+    
+    int2 minBoxIdI = (int2)minBoxId;
+    if (minBoxIdI.x < 0)
+        minBoxIdI.x += image.width;
+    if (minBoxIdI.y < 0)
+        minBoxIdI.y += image.height;
+
+    int2 maxBoxIdI = (int2)maxBoxId;
+    if (maxBoxIdI.x >= image.width)
+        maxBoxIdI.x -= image.width;
+    if (maxBoxIdI.y >= image.height)
+        maxBoxIdI.y -= image.height;
+
+    int2 p0 = minBoxIdI.xy;
+    int2 p1 = { maxBoxIdI.x, minBoxIdI.y }; 
+    int2 p2 = { minBoxIdI.x, maxBoxIdI.y };
+    int2 p3 = maxBoxIdI.xy;
+    positions[0] = p0;
+    positions[1] = p1;
+    positions[2] = p2;
+    positions[3] = p3;
+
+    offsets.x = positions[0].x + positions[0].y*image.width;
+    offsets.y = positions[1].x + positions[1].y*image.width;
+    offsets.z = positions[2].x + positions[2].y*image.width;
+    offsets.w = positions[3].x + positions[3].y*image.width;
+}
+
+inline void linearSample2dInfo(
+    const uniform Image& image,
+    varying float2 uv,
+    varying float4& weights,
+    varying int4& offsets)
+{
+    float2 dummyWeightsDims;
+    int2 dummyPositions[4];
+    linearSample2dInfoExtra(image, uv, weights, dummyWeightsDims, offsets, dummyPositions);
+}
+
+
+inline void linearSample3dInfo(
+    const Image& image, float3 uvw,
+    float4& weights0, float4& weights1,
+    int4& offsets0, int4& offsets1)
+{
+    float3 minBox = (uvw - image.halfTexelSize.xyz) * image.dimensions.xyz;
+    float3 maxBox = (uvw + image.halfTexelSize.xyz) * image.dimensions.xyz;
+    float3 minBoxId = floor_f3(minBox);
+    float3 maxBoxId = floor_f3(maxBox);
+    const float3 one_f3 = { 1.0f, 1.0f, 1.0f };
+    float3 minBoxFrac = one_f3 - (minBox - minBoxId);
+    float3 maxBoxFrac = maxBox - maxBoxId;
+
+    weights0.x = minBoxFrac.x * minBoxFrac.y * minBoxFrac.z;
+    weights0.y = maxBoxFrac.x * minBoxFrac.y * minBoxFrac.z;
+    weights0.z = minBoxFrac.x * maxBoxFrac.y * minBoxFrac.z;
+    weights0.w = maxBoxFrac.x * maxBoxFrac.y * minBoxFrac.z;
+    weights1.x = minBoxFrac.x * minBoxFrac.y * maxBoxFrac.z;
+    weights1.y = maxBoxFrac.x * minBoxFrac.y * maxBoxFrac.z;
+    weights1.z = minBoxFrac.x * maxBoxFrac.y * maxBoxFrac.z;
+    weights1.w = maxBoxFrac.x * maxBoxFrac.y * maxBoxFrac.z;
+    
+    int3 minBoxIdI = (int3)minBoxId;
+    if (minBoxIdI.x < 0)
+        minBoxIdI.x += image.width;
+    if (minBoxIdI.y < 0)
+        minBoxIdI.y += image.height;
+    if (minBoxIdI.z < 0)
+        minBoxIdI.z += image.depth;
+
+    int3 maxBoxIdI = (int3)maxBoxId;
+    if (maxBoxIdI.x >= image.width)
+        maxBoxIdI.x -= image.width;
+    if (maxBoxIdI.y >= image.height)
+        maxBoxIdI.y -= image.height;
+    if (maxBoxIdI.z >= image.depth)
+        maxBoxIdI.z -= image.depth;
+
+    int3 p00 = minBoxIdI.xyz;
+    int3 p01 = { maxBoxIdI.x, minBoxIdI.y, minBoxIdI.z };
+    int3 p02 = { minBoxIdI.x, maxBoxIdI.y, minBoxIdI.z };
+    int3 p03 = { maxBoxIdI.x, maxBoxIdI.y, minBoxIdI.z };
+
+    int3 p10 = { minBoxIdI.x, minBoxIdI.y, maxBoxIdI.z };
+    int3 p11 = { maxBoxIdI.x, minBoxIdI.y, maxBoxIdI.z };
+    int3 p12 = { minBoxIdI.x, maxBoxIdI.y, maxBoxIdI.z };
+    int3 p13 = maxBoxIdI.xyz;
+
+    int slideStride = image.height * image.width;
+    offsets0.x = p00.x + p00.y*image.width + p00.z*slideStride;
+    offsets0.y = p01.x + p01.y*image.width + p01.z*slideStride;
+    offsets0.z = p02.x + p02.y*image.width + p02.z*slideStride;
+    offsets0.w = p03.x + p03.y*image.width + p03.z*slideStride;
+    offsets1.x = p10.x + p10.y*image.width + p10.z*slideStride;
+    offsets1.y = p11.x + p11.y*image.width + p11.z*slideStride;
+    offsets1.z = p12.x + p12.y*image.width + p12.z*slideStride;
+    offsets1.w = p13.x + p13.y*image.width + p13.z*slideStride;
+}
+
 
