@@ -22,8 +22,15 @@ export void PerlinKernel(
                 float4 weights;
                 float2 weightDims;
                 int4 offsets;
+                linearSample2dInfo(directions, uv, weights, weightDims, offsets);
                 int2 samplePos[4];
-                linearSample2dInfoExtra(directions, uv, weights, weightDims, offsets, samplePos);
+                samplePos[0] = (int2)floor_f2((uv - directions.halfTexelSize.xy) * directions.dimensions.xy);
+                samplePos[1] = samplePos[0];
+                samplePos[1].x += 1;
+                samplePos[2] = samplePos[0];
+                samplePos[2].y += 1;
+                samplePos[3] = samplePos[2];
+                samplePos[3].x += 1;
                 
                 #pragma ignore warning(perf)
 	    		float2 grid0 = directionsData[offsets.x].xy;
@@ -66,34 +73,6 @@ export void PerlinKernel(
 	    	float* row = output.data + rowOffset;
 	    	foreach(x=x0...x1)
             {
-                float2 coord = { ((float)x + 0.5f), ((float)y + 0.5f) };
-                float2 uv = coord * output.texelSize.xy;
-                float4 weights;
-                int4 offsets;
-                int2 samplePos[4];
-                linearSample2dInfoExtra(directions, uv, weights, offsets, samplePos);
-                
-                #pragma ignore warning(perf)
-	    		float2 grid0 = directionsData[offsets.x].xyz;
-                #pragma ignore warning(perf)
-	    		float2 grid1 = directionsData[offsets.y].xyz;
-                #pragma ignore warning(perf)
-	    		float2 grid2 = directionsData[offsets.z].xyz;
-                #pragma ignore warning(perf)
-	    		float2 grid3 = directionsData[offsets.w].xyz;
-
-                float2 posInGrid = uv * directions.dimensions.xy;
-                float2 dir0 = posInGrid - (float2)samplePos[0];
-                float2 dir1 = posInGrid - (float2)samplePos[1];
-                float2 dir2 = posInGrid - (float2)samplePos[2];
-                float2 dir3 = posInGrid - (float2)samplePos[3];
-
-                float d0 = dot_f2(grid0.xy, dir0);
-                float d1 = dot_f2(grid1.xy, dir1);
-                float d2 = dot_f2(grid2.xy, dir2);
-                float d3 = dot_f2(grid3.xy, dir3);
-                float noiseValue = d0 * weights.x + d1 * weights.y + d2 * weights.z + d3 * weights.w;
-                row[x] = noiseValue * 0.5 + 0.5;
             }
         }
 #endif

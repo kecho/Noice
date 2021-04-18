@@ -209,16 +209,15 @@ struct Image
 	uniform float* data;
 };
 
-inline void linearSample2dInfoExtra(
+inline void linearSample2dInfo(
     const uniform Image& image,
     varying float2 uv,
     varying float4& weights,
     varying float2& weightsDims,
-    varying int4& offsets,
-    varying int2 positions[4])
+    varying int4& offsets)
 {
     float2 minBox = (uv - image.halfTexelSize.xy) * image.dimensions.xy;
-    float2 maxBox = (uv + image.halfTexelSize.xy) * image.dimensions.xy;
+    float2 maxBox = minBox + 1.0f;
     float2 minBoxId = floor_f2(minBox);
     float2 maxBoxId = floor_f2(maxBox);
     const float2 one_f2 = { 1.0f, 1.0f };
@@ -247,26 +246,11 @@ inline void linearSample2dInfoExtra(
     int2 p1 = { maxBoxIdI.x, minBoxIdI.y }; 
     int2 p2 = { minBoxIdI.x, maxBoxIdI.y };
     int2 p3 = maxBoxIdI.xy;
-    positions[0] = p0;
-    positions[1] = p1;
-    positions[2] = p2;
-    positions[3] = p3;
 
-    offsets.x = positions[0].x + positions[0].y*image.width;
-    offsets.y = positions[1].x + positions[1].y*image.width;
-    offsets.z = positions[2].x + positions[2].y*image.width;
-    offsets.w = positions[3].x + positions[3].y*image.width;
-}
-
-inline void linearSample2dInfo(
-    const uniform Image& image,
-    varying float2 uv,
-    varying float4& weights,
-    varying int4& offsets)
-{
-    float2 dummyWeightsDims;
-    int2 dummyPositions[4];
-    linearSample2dInfoExtra(image, uv, weights, dummyWeightsDims, offsets, dummyPositions);
+    offsets.x = p0.x + p0.y*image.width;
+    offsets.y = p1.x + p1.y*image.width;
+    offsets.z = p2.x + p2.y*image.width;
+    offsets.w = p3.x + p3.y*image.width;
 }
 
 
