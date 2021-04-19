@@ -12,11 +12,11 @@ export void PerlinKernel(
     if (output.depth == 1)
     {
         float4* directionsData = (float4*)directions.data;
-	    for (uniform uint y = y0; y < y1; ++y)
-	    {
+        for (uniform uint y = y0; y < y1; ++y)
+        {
             uniform int rowOffset = y * width;
-	    	float* row = output.data + rowOffset;
-	    	foreach(x=x0...x1)
+            float* row = output.data + rowOffset;
+            foreach(x=x0...x1)
             {
                 float2 coord = { ((float)x + 0.5f), ((float)y + 0.5f) };
                 float2 uv = coord * output.texelSize.xy;
@@ -33,13 +33,13 @@ export void PerlinKernel(
                 samplePos[3].x += 1;
                 
                 #pragma ignore warning(perf)
-	    		float2 grid0 = directionsData[offsets.x].xy;
+                float2 grid0 = directionsData[offsets.x].xy;
                 #pragma ignore warning(perf)
-	    		float2 grid1 = directionsData[offsets.y].xy;
+                float2 grid1 = directionsData[offsets.y].xy;
                 #pragma ignore warning(perf)
-	    		float2 grid2 = directionsData[offsets.z].xy;
+                float2 grid2 = directionsData[offsets.z].xy;
                 #pragma ignore warning(perf)
-	    		float2 grid3 = directionsData[offsets.w].xy;
+                float2 grid3 = directionsData[offsets.w].xy;
 
                 float2 posInGrid = uv * directions.dimensions.xy;
                 float2 dir0 = posInGrid - (float2)samplePos[0];
@@ -65,11 +65,11 @@ export void PerlinKernel(
     {
         uniform int sliceOffset = z * width * height;
         float4* directionsData = (float4*)directions.data;
-	    for (uniform uint y = y0; y < y1; ++y)
-	    {
+        for (uniform uint y = y0; y < y1; ++y)
+        {
             uniform int rowOffset = y * width + sliceOffset;
-	    	float* row = output.data + rowOffset;
-	    	foreach(x=x0...x1)
+            float* row = output.data + rowOffset;
+            foreach(x=x0...x1)
             {
                 float3 coord = { ((float)x + 0.5f), ((float)y + 0.5f), ((float)z + 0.5f) };
                 float3 uvw = coord * output.texelSize.xyz;
@@ -93,21 +93,21 @@ export void PerlinKernel(
                 
                 float3 gridSamples[8];
                 #pragma ignore warning(perf)
-	    		gridSamples[0] = directionsData[offsets0.x].xyz;
+                gridSamples[0] = directionsData[offsets0.x].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[1] = directionsData[offsets0.y].xyz;
+                gridSamples[1] = directionsData[offsets0.y].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[2] = directionsData[offsets0.z].xyz;
+                gridSamples[2] = directionsData[offsets0.z].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[3] = directionsData[offsets0.w].xyz;
+                gridSamples[3] = directionsData[offsets0.w].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[4] = directionsData[offsets1.x].xyz;
+                gridSamples[4] = directionsData[offsets1.x].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[5] = directionsData[offsets1.y].xyz;
+                gridSamples[5] = directionsData[offsets1.y].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[6] = directionsData[offsets1.z].xyz;
+                gridSamples[6] = directionsData[offsets1.z].xyz;
                 #pragma ignore warning(perf)
-	    		gridSamples[7] = directionsData[offsets1.w].xyz;
+                gridSamples[7] = directionsData[offsets1.w].xyz;
 
                 float3 posInGrid = uvw * directions.dimensions.xyz;
                 float3 dirs[8];

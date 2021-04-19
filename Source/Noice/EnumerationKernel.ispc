@@ -11,15 +11,15 @@ export void EnumerationKernel(
     uniform int sliceStride = z * width * height;
     uniform float sliceStrideF = sliceStride;
     uniform float* dataPtr = result.data + sliceStride;
-	for (uniform uint y = y0; y < y1; ++y)
-	{
+    for (uniform uint y = y0; y < y1; ++y)
+    {
         uniform int rowStride = y*result.width;
         uniform float idOffset = sliceStrideF + rowStride;
-		float* row = dataPtr + rowStride;
-		foreach(x=x0...x1)
+        float* row = dataPtr + rowStride;
+        foreach(x=x0...x1)
         {
             float id = idOffset + x; 
-			row[x] = id / totalPixelCountF;
+            row[x] = id / totalPixelCountF;
         }
     }
 }

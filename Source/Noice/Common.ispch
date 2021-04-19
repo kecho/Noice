@@ -10,32 +10,32 @@ typedef float<4> float4;
 
 inline uint min_u(uint a, uint b)
 {
-	return a < b ? a : b;
+    return a < b ? a : b;
 }
 
 inline uint min_i(int a, int b)
 {
-	return a < b ? a : b;
+    return a < b ? a : b;
 }
 
 inline float min_f(float a, float b)
 {
-	return a < b ? a : b;
+    return a < b ? a : b;
 }
 
 inline int abs_i(int a)
 {
-	return a > 0 ? a : -a;
+    return a > 0 ? a : -a;
 }
 
 inline float abs_f(float v)
 {
-	return v > 0 ? v : -v;
+    return v > 0 ? v : -v;
 }
 
 inline float2 abs_f2(float2 v)
 {
-	float2 ans = { v.x > 0 ? v.x : -v.x, v.y > 0 ? v.y : -v.y };
+    float2 ans = { v.x > 0 ? v.x : -v.x, v.y > 0 ? v.y : -v.y };
     return ans;
 }
 
@@ -61,43 +61,43 @@ inline float2 normalize_f2(float2 a)
 
 inline uint2 min_u2(uint2 a, uint2 b)
 {
-	uint2 r = { min_u(a.x,b.x), min_u(a.y, b.y) }; 
-	return r;
+    uint2 r = { min_u(a.x,b.x), min_u(a.y, b.y) }; 
+    return r;
 }
 
 inline float2 min_f2(float2 a, float2 b)
 {
-	float2 r = { min_f(a.x,b.x), min_f(a.y, b.y) }; 
-	return r;
+    float2 r = { min_f(a.x,b.x), min_f(a.y, b.y) }; 
+    return r;
 }
 
 inline int2 abs_i2(int2 v)
 {
-	int2 r = { abs_i(v.x), abs_i(v.y) };
-	return r;
+    int2 r = { abs_i(v.x), abs_i(v.y) };
+    return r;
 }
 
 inline int3 abs_i3(int3 v)
 {
-	int3 r = { abs_i(v.x), abs_i(v.y), abs_i(v.z) };
-	return r;
+    int3 r = { abs_i(v.x), abs_i(v.y), abs_i(v.z) };
+    return r;
 }
 
 inline int2 min_i2(int2 a, int2 b)
 {
-	int2 r = { min_i(a.x,b.x), min_i(a.y, b.y) }; 
-	return r;
+    int2 r = { min_i(a.x,b.x), min_i(a.y, b.y) }; 
+    return r;
 }
 
 inline int3 min_i3(int3 a, int3 b)
 {
-	int3 r = { min_i(a.x,b.x), min_i(a.y, b.y), min_i(a.z, b.z) }; 
-	return r;
+    int3 r = { min_i(a.x,b.x), min_i(a.y, b.y), min_i(a.z, b.z) }; 
+    return r;
 }
 
 inline float fract(float v)
 {
-	return abs_f(v) - (float)(abs_i((int)v));
+    return abs_f(v) - (float)(abs_i((int)v));
 }
 
 inline float2 fract_f2(float2 v)
@@ -206,7 +206,7 @@ struct Image
     uniform float4 dimensions;
     uniform float4 texelSize;
     uniform float4 halfTexelSize;
-	uniform float* data;
+    uniform float* data;
 };
 
 inline void linearSample2dInfo(

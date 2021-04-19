@@ -25,7 +25,7 @@ export void InitPixelStates(
     uniform uint d)
 {
     uniform int wh = w*h;
-	foreach(i=0...counts)
+    foreach(i=0...counts)
     {
         #pragma ignore warning(perf)
         uint x = i % w;
@@ -60,8 +60,8 @@ export void SimdFindMax(
         PixelState p1 = inputStates[si + offset1];
 
         #pragma ignore warning(perf)
-		if (IsValid(p0) == 1 && IsValid(p1) == 1)
-		{
+        if (IsValid(p0) == 1 && IsValid(p1) == 1)
+        {
             #pragma ignore warning(perf)
             float d0 = distanceImg.data[GetOffset(p0)];
 
@@ -69,13 +69,13 @@ export void SimdFindMax(
             float d1 = distanceImg.data[GetOffset(p1)];
 
             #pragma ignore warning(perf)
-			outputStates[oi] = d0 < d1 ? p0 : p1;
-		}
-		else
-		{
+            outputStates[oi] = d0 < d1 ? p0 : p1;
+        }
+        else
+        {
             #pragma ignore warning(perf)
-			outputStates[oi] = IsValid(p0) == 1 ? p0 : p1;
-		}
+            outputStates[oi] = IsValid(p0) == 1 ? p0 : p1;
+        }
     }
 }
  
