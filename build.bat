@@ -1,1 +1,1 @@
-Tools\tundra\bin\tundra2.exe %*
+Tools\tundra-windows-2.0\bin\tundra2.exe %*
