@@ -8,7 +8,7 @@ export void RandomDirKernel(
     const uniform Image& scrambleTexture,
     uniform Image& result)
 {
-    if (result.channels == 2)
+    if (depth == 1)
     {
         uniform int N = width * height;
         for (uniform uint y = y0; y < y1; ++y)
@@ -18,7 +18,7 @@ export void RandomDirKernel(
             foreach(x=x0...x1)
             {
                 float texValue = scrambleTexture.data[rowOffset + x];
-                float2 value = discSample(0.1f);
+                float2 value = discSample(texValue);
                 #pragma ignore warning(perf)
                 row[x] = value.xyxy;
             }
