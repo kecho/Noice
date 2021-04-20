@@ -102,7 +102,7 @@ private:
     void reportError(const char* msg) const;
     void reportErrorStr(const std::string& msg) const;
     bool parseParamName(const ClTokenizer::Name& nm, ParamLoc& outLoc);
-    bool parseParamValue(const ParamLoc& loc, const ClTokenizer::Imm& value);
+    bool parseParamValue(const ParamLoc& loc, ClTokenizer::Imm value);
 
     Schema m_schema;
     OnErrorCallback m_onError = nullptr;

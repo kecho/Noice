@@ -78,6 +78,9 @@ void ClParser::printTokens(int argc, char* argv[])
             case CliParamType::Int:
                 std::cout << imm->scalar.u << " ";
                 break;
+            case CliParamType::Float:
+                std::cout << imm->scalar.f << " ";
+                break;
             case CliParamType::Uint:
                 std::cout << imm->scalar.i << " ";
                 break;
@@ -266,11 +269,35 @@ bool ClParser::parseParamName(const ClTokenizer::Name& nm, ClParser::ParamLoc& o
     return true;
 }
 
-bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer::Imm& value)
+bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, ClTokenizer::Imm value)
 {
     char* obj = (char*)m_groupBinds[loc.gid];
     Group& group = m_schema.groups[loc.gid];
     ParamData& paramType = group.params[loc.paramIndex];
+
+    if (value.type != CliParamType::String && paramType.type == CliParamType::String)
+    {
+        bool castSuccess = true;
+        std::stringstream castResult;
+        switch (value.type)
+        {
+        case CliParamType::Float:
+        case CliParamType::Int:
+        case CliParamType::Uint:
+        case CliParamType::Bool:
+            castResult << value.strValue;
+            break;
+        default:
+            castSuccess = false;
+        }
+        if (castSuccess)
+        {
+            ClTokenizer::Imm newImm;
+            newImm.type = CliParamType::String;
+            newImm.strValue = castResult.str();
+            value = newImm;
+        }
+    }
 
     const bool valueIsInt   = value.type == CliParamType::Uint || value.type == CliParamType::Int;
     const bool requestIsUnsigned = paramType.type == CliParamType::Uint;
@@ -288,7 +315,6 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
         return false;
     }
 
-    
     if (value.type == CliParamType::String && !paramType.enumNames.empty())
     {
         bool found = false;
@@ -328,6 +354,7 @@ bool ClParser::parseParamValue(const ClParser::ParamLoc& loc, const ClTokenizer:
             resultPtr = m_supportStrings.back().get()->c_str();
         }
         break;
+    case CliParamType::Float:
     case CliParamType::Int:
     case CliParamType::Uint:
         {

@@ -37,13 +37,48 @@ struct ChannelParametes
     const char* channelName = "";
     const char* noiseType = BLUE_TYPE;
     float rho2 = 2.1f;
+
+    const char* perlinFrequenciesString = "";
+    const char* perlinWeightsString   = "";
+    std::vector<float> perlinFrequencies;
+    std::vector<float> perlinWeights;
+
+    bool readPerlinFrequencies()
+    {
+        if (perlinFrequenciesString == nullptr || !*perlinFrequenciesString)
+            return true;
+
+        std::string ss = perlinFrequenciesString;
+        std::vector<float> result;
+        if (!noice::ClTokenizer::parseFloatList(result, ss, ':'))
+            return false;
+
+        perlinFrequencies = std::move(result);
+        return true;
+    }
+
+    bool readPerlinWeights()
+    {
+        if (perlinWeightsString == nullptr || !*perlinWeightsString)
+            return true;
+
+        std::string ss = perlinWeightsString;
+        std::vector<float> result;
+        if (!noice::ClTokenizer::parseFloatList(result, ss, ':'))
+            return false;
+
+        perlinWeights = std::move(result);
+        return true;
+    }
+
 };
 
 struct ArgParameters
 {
-    int width = 128;
+    const char* dimensionsString = "128";
+    int width  = -1;
     int height = -1;
-    int depth = -1;
+    int depth  = -1;
     int threadCount = 16;
     bool printHelp = false;
     bool quiet = false;
@@ -51,6 +86,33 @@ struct ArgParameters
     bool pipe = false;
     const char* outputName = "noise.exr";
     ChannelParametes channels[4];
+
+    bool readDimensions()
+    {
+        if (dimensionsString == nullptr)
+            return false;
+
+        std::string ds = dimensionsString;
+        std::vector<int> result;
+        if (!noice::ClTokenizer::parseIntList(result, ds, 'x'))
+            return false;
+
+        if (result.empty() || result.size() > 3)
+            return false;
+
+        width = result[0];
+        if (result.size() >= 2)
+            height = result[1];
+        else
+            height = width;
+
+        if (result.size() >= 3)
+            depth = result[2];
+        else
+            depth = 1;
+
+        return true;
+    }
 };
 
 void printHeader()
@@ -95,16 +157,9 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         String, ArgParameters, outputName);
 
     CliSwitch(generalGid, 
-        "Width of the target texture (defaults to 128)", "W", "width", 
-        Uint, ArgParameters, width);
-    
-    CliSwitch(generalGid, 
-        "Height of the target texture (defaults to width)", "H", "height", 
-        Uint, ArgParameters, height);
-    
-    CliSwitch(generalGid, 
-        "Depth of the target texture (defaults to 1 pixel, or a 2d texture)", "D", "depth", 
-        Uint, ArgParameters, depth);
+        "Dimension string describing the output texture. Each dimension size must be separated by the 'x' character."
+        " '-d 32' would mean a texture of 32x32x1. '-d 32x15' would mean a texture of 32x15x1. '-d 15x16x15' would mean a texture of 15x16x15 and so on.", "d", "dimensions", 
+        String, ArgParameters, dimensionsString);
 
     CliSwitch(generalGid, 
         "Disables all the standard output, when writting a texture to a file", "q", "quiet", 
@@ -158,6 +213,18 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         String, ChannelParametes, noiseType,
         noiseTypes, nullptr);
 
+    CliSwitch(channelGid,
+        "Colon separated values with the perlin noise grid frequencies. For example, 3:4.0:24.0:64.0 etc.\n"
+        "\tIf set, the weights must be set as well, with one corresponding weight per frequency.",
+        "f", "frequencies", 
+        String, ChannelParametes, perlinFrequenciesString);
+
+    CliSwitch(channelGid,
+        "Colon separated numbers with the perlin noise grid weights corresponding to each frequency.\n"
+        "\tThe weights must correspond to one per frequency.",
+        "w", "weights", 
+        String, ChannelParametes, perlinWeightsString);
+
     return true;
 }
 
@@ -188,25 +255,6 @@ void printProgress(const noice::EventArguments& args)
 
 ReturnCodes work(const ArgParameters& parameters)
 {
-    //parameter validation
-    if (parameters.width == 0)
-    {
-        std::cerr << "Width cannot be 0." << std::endl;
-        return ReturnCodes::BadCmdArgs;
-    }
-
-    if (parameters.height == 0)
-    {
-        std::cerr << "Height cannot be 0." << std::endl;
-        return ReturnCodes::BadCmdArgs;
-    }
-
-    if (parameters.depth == 0)
-    {
-        std::cerr << "Depth cannot be 0." << std::endl;
-        return ReturnCodes::BadCmdArgs;
-    }
-
     const char* channelNames[] = { "r", "g", "b", "a" };
 
     noice::TextureFileDesc outDesc;
@@ -264,6 +312,9 @@ ReturnCodes work(const ArgParameters& parameters)
             desc.height = (int)parameters.height;
             desc.depth  = (int)parameters.depth;
             desc.seed = (unsigned)channelParmeters.seed;
+            desc.frequencies = channelParmeters.perlinFrequencies.data();
+            desc.weights = channelParmeters.perlinWeights.data();
+            desc.frequencyCounts = (int)channelParmeters.perlinFrequencies.size();
             err = generatePerlinNoise(currentHandle, desc, parameters.threadCount);
         }
 
@@ -297,6 +348,93 @@ ReturnCodes work(const ArgParameters& parameters)
 
 }
 
+ReturnCodes validateAndProcessParameters(ArgParameters& parameters)
+{
+    //parameter validation
+    for (auto& channel : parameters.channels)
+    {
+        if (!channel.enabled)
+            continue;
+
+        if (!channel.readPerlinFrequencies())
+        {
+            std::cerr << "Could not read perlin frequencies (f). Must be a list of ':' separated numbers. Got \"" << channel.perlinFrequenciesString << "\" instead." <<std::endl;
+            return ReturnCodes::BadCmdArgs;
+        }
+
+        if (!channel.readPerlinWeights())
+        {
+            std::cerr << "Could not read perlin weights (w). Must be a list of ':' separated numbers. Got \"" << channel.perlinWeightsString << "\" instead." <<std::endl;
+            return ReturnCodes::BadCmdArgs;
+        }
+
+        if (channel.perlinWeights.size() != channel.perlinFrequencies.size())
+        {
+            std::cerr << "The perlin list of frequencies and weights must match in count. " << std::endl;
+            return ReturnCodes::BadCmdArgs;
+        }
+        for (auto f : channel.perlinFrequencies)
+        {
+            if (f <= 0.0f)
+            {
+                std::cerr << "Found negative or 0 frequency in the list of frequencies. All frequencies must be greater than 0. " << std::endl;
+                return ReturnCodes::BadCmdArgs;
+            }
+
+            if (f > 4000)
+            {
+                std::cerr << "Found an extremely high perlin frequency, please dont use values greater than 4000. " << std::endl;
+                return ReturnCodes::BadCmdArgs;
+            }
+        }
+        for (auto f : channel.perlinWeights)
+        {
+            if (f < 0.0f)
+            {
+                std::cerr << "Found negative in the list of weights. All weights must be greater than or equal to 0. " << std::endl;
+                return ReturnCodes::BadCmdArgs;
+            }
+        }
+    }
+
+    if (parameters.width <= 0)
+    {
+        std::cerr << "Width cannot be less or equal to 0." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.height <= 0)
+    {
+        std::cerr << "Height cannot be less or equal to 0." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.depth <= 0)
+    {
+        std::cerr << "Depth cannot be less or equal to 0." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.width > 4096)
+    {
+        std::cerr << "Width cannot be greater than 4096." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.height > 4096)
+    {
+        std::cerr << "Height cannot be greater than 4096." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.depth > 4096)
+    {
+        std::cerr << "Depth cannot be greater than 4096." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+    return ReturnCodes::Success;
+}
+
 int main(int argc, char* argv[])
 {
     noice::ClParser parser;
@@ -310,7 +448,15 @@ int main(int argc, char* argv[])
     prepareCliSchema(parser, parameters);
 
     if (!parser.parse(argc, argv))
+    {
         return (int)ReturnCodes::BadCmdArgs;
+    }
+
+    if (!parameters.readDimensions())
+    {
+        std::cerr << "Failed to parse dimensions (d). String passed was \"" << parameters.dimensionsString << "\" " << std::endl;
+        return (int)ReturnCodes::BadCmdArgs;
+    }
 
     if (!parameters.quiet)
     {
@@ -322,11 +468,6 @@ int main(int argc, char* argv[])
             return (int)ReturnCodes::Success;
         }
     }
-
-    if (parameters.height < 0)
-        parameters.height = parameters.width;
-    if (parameters.depth < 0)
-        parameters.depth = 1;
 
     bool useDefaultChannel = true;
     for (int i = 0; i < 4; ++i)
@@ -342,6 +483,11 @@ int main(int argc, char* argv[])
     {
         parameters.channels[0].enabled = true;
     }
+
+    auto validationResult = validateAndProcessParameters(parameters);
+    if (validationResult != ReturnCodes::Success)
+        return (int)validationResult;
+
 
     if (!parameters.quiet)
     {

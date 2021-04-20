@@ -64,6 +64,9 @@ struct PerlinNoiseGenDesc
     int height = 64;
     int depth  = 1;
     unsigned seed = 0xdeadbeef;
+    const float* frequencies = nullptr;
+    const float* weights = nullptr;
+    int frequencyCounts = 0;
 };
 
 struct TextureFileDesc

@@ -95,9 +95,24 @@ Error perlinNoiseGenerator(
     EventArguments callbackArgs;
     callbackArgs.userData = output.getEventUserData();
 
-    float frequencies[] = { 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f };
-    float weights[]     = { 0.5f, 0.3f, 0.2f, 0.1f, 0.05f, 0.02f };
-    int freqCounts = sizeof(frequencies)/sizeof(frequencies[0]);
+    static float defaultFrequencies[] = { 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f };
+    static float defaultWeights[]     = { 0.5f, 0.3f, 0.2f, 0.1f, 0.05f, 0.02f };
+
+    const float* frequencies = desc.frequencies;
+    const float* weights = desc.weights;
+    int freqCounts = desc.frequencyCounts;
+
+    if ((frequencies == nullptr && weights == nullptr) || freqCounts == 0)
+    {
+        frequencies = defaultFrequencies;
+        weights = defaultWeights;
+        freqCounts = sizeof(defaultFrequencies)/sizeof(defaultFrequencies[0]);
+    }
+    else if (frequencies == nullptr || weights == nullptr)
+    {
+        return Error::BadArgs;
+    }
+
     for (int i = 0; i < freqCounts; ++i)
     {
         float weight = weights[i];

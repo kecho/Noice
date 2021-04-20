@@ -293,9 +293,10 @@ bool cliGrammar0()
         bool boolTest0;
         bool boolTest1;
         const char* name1;
+        const char* name2;
     };
 
-    char params[][64] ={ "exe", "-i=10", "-j", "-40", "--name0=MyNamE", "-n", "AnotherName", "-btrue", "-q=false" };
+    char params[][64] ={ "exe", "-i=10", "-j", "-40", "--name0=MyNamE", "-n", "AnotherName", "-btrue", "-q=false", "-o2.0" };
     std::vector<char*> paramsV;
     for (auto& p : params)
         paramsV.push_back(p);
@@ -332,6 +333,13 @@ bool cliGrammar0()
 
     parser.addParam(rootId, ClParser::ParamData(
         "",
+        "o",
+        "name2",
+        CliParamType::String,
+        offsetof(SimpleStruct, name2)));
+
+    parser.addParam(rootId, ClParser::ParamData(
+        "",
         "b",
         "boolTest0",
         CliParamType::Bool,
@@ -365,6 +373,11 @@ bool cliGrammar0()
 
     if (std::string(obj.name1) != "AnotherName")
         return false;
+
+    if (std::string(obj.name2) != "2.0")
+    {
+        return false;
+    }
 
     if (!obj.boolTest0)
         return false;

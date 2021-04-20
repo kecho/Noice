@@ -9,7 +9,7 @@ namespace noice
 
 enum class CliParamType
 {
-    Uint, Int, Bool, String
+    Uint, Int, Float, Bool, String
 };
 
 class ClTokenizer
@@ -24,6 +24,7 @@ public:
         union {
             unsigned u;
             int i;
+            float f;
             bool b;
         } scalar;
     };

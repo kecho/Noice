@@ -162,7 +162,7 @@ bool ClTokenizer::parseIntList  (std::vector<int>& outList, const std::string& i
         if (!parseInteger(s, intOut, unusedVal, parsedCount))
             return false;
 
-        if (((int)s.size() - 1) != parsedCount)
+        if (s.size() != parsedCount)
             return false;
 
         outList.push_back(intOut);
@@ -182,6 +182,8 @@ bool ClTokenizer::parseFloatList(std::vector<float>& outList, const std::string&
         if (!parseFloat(s, floatOut, parsedCount))
             return false;
 
+        if (parsedCount != s.size())
+            return false;
 
         outList.push_back(floatOut);
     }
@@ -198,6 +200,9 @@ std::string ClTokenizer::toString(const ClTokenizer::Token& t)
         {
         case CliParamType::Int:
             ss << imm->scalar.i;
+            break;
+        case CliParamType::Float:
+            ss << imm->scalar.f;
             break;
         case CliParamType::Uint:
             ss << imm->scalar.u;
@@ -233,6 +238,8 @@ const char* ClTokenizer::toString(CliParamType type)
         return "Uint";
     case CliParamType::Int:
         return "Int";
+    case CliParamType::Float:
+        return "Float";
     case CliParamType::Bool:
         return "Bool";
     case CliParamType::String:
@@ -295,25 +302,31 @@ ClTokenizer::Result ClTokenizer::next(ClTokenizer::Token& outToken)
         Imm imm;
         imm.hasSign = false;
         int intVal = 0;
+        float floatVal = 0;
         bool boolVal = 0;
         int charsParsed = 0;
-        if (parseInteger(clStr, intVal, imm.hasSign, charsParsed))
+        if (parseInteger(clStr, intVal, imm.hasSign, charsParsed) && clStr.size() == charsParsed)
         {
             imm.type = CliParamType::Int;
             imm.scalar.i = intVal;
         }
-        else if (parseBool(clStr, boolVal, charsParsed))
+        else if (parseBool(clStr, boolVal, charsParsed) && clStr.size() == charsParsed)
         {
             imm.type = CliParamType::Bool;
             imm.scalar.b = boolVal;
         }
+        else if (parseFloat(clStr, floatVal, charsParsed) && clStr.size() == charsParsed)
+        {
+            imm.type = CliParamType::Float;
+            imm.scalar.f = floatVal;
+        }
         else
         {
             imm.type = CliParamType::String;
-            imm.strValue = clStr;
             charsParsed = clStr.size();
         }
 
+        imm.strValue = clStr;
         outToken = imm;
         str += charsParsed;
     }
