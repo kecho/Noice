@@ -8,21 +8,34 @@ local SourceDir = "Source";
 
 local LibIncludes = {
     SourceDir.."/Noice/Public/",
-    "External/OpenEXR/include/OpenEXR"
+    {
+        "External/OpenEXR/include/OpenEXR",
+        Config = { "win64-msvc-*" }
+    },
+    {
+        "/usr/include/OpenEXR/",
+        Config = { "linux-gcc-*" }
+    }
 }
 
 local Libs = {
-    "bsd",
-    "External/OpenEXR/staticlib/IlmImf-2_5.lib",
-    "External/OpenEXR/staticlib/IlmImfUtil-2_5.lib",
-    "External/OpenEXR/staticlib/Half-2_5.lib",
-    "External/OpenEXR/staticlib/Imath-2_5.lib",
-    "External/OpenEXR/staticlib/Iex-2_5.lib",
-    "External/OpenEXR/staticlib/IexMath-2_5.lib",
-    "External/OpenEXR/staticlib/IlmThread-2_5.lib",
-    "External/Zlib/lib/zlibstatic.lib",
-    "Advapi32.lib",
-    "User32.lib"
+    {
+        "External/OpenEXR/staticlib/IlmImf-2_5.lib",
+        "External/OpenEXR/staticlib/IlmImfUtil-2_5.lib",
+        "External/OpenEXR/staticlib/Half-2_5.lib",
+        "External/OpenEXR/staticlib/Imath-2_5.lib",
+        "External/OpenEXR/staticlib/Iex-2_5.lib",
+        "External/OpenEXR/staticlib/IexMath-2_5.lib",
+        "External/OpenEXR/staticlib/IlmThread-2_5.lib",
+        "External/Zlib/lib/zlibstatic.lib",
+        "Advapi32.lib",
+        "User32.lib";
+        Config = { "win64-msvc-*" }
+    },
+    {
+        "IlmImf", "tbb",
+        Config = { "linux-gcc-*" }
+    }
 }
 
 StaticLibrary {

@@ -36,7 +36,7 @@ Build {
             Tools = { "gcc", "ispc" },
             Env = {
                 ISPCOPTS = {
-                    "--target=sse4 --cpu=corei7",
+                    "--target=sse4 --cpu=corei7 --pic",
                     { "--arch=x86-64" },
                 },
                 CPPPATH = {
@@ -45,6 +45,7 @@ Build {
                 CXXOPTS = { "-std=c++17" },
             },
             ReplaceEnv = {
+                LD = "$(CXX)",
                 ISPC = "Tools$(SEP)ispc-v1.15.0-linux$(SEP)bin$(SEP)ispc", 
             },
         },
