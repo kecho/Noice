@@ -12,6 +12,8 @@
 namespace noice
 {
 
+const char* g_noiceVersion = "1.0.0";
+
 static const char* sErrorString[(int)Error::Count] = 
 {
     "Ok",
