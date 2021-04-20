@@ -8,8 +8,6 @@
 #include "PerlinNoiseGenerator.h"
 #include "ImageStream.h"
 #include <stdio.h>
-#include <fcntl.h>
-#include <sys/io.h>
 
 namespace noice
 {
@@ -40,10 +38,9 @@ const char* getErrorString(Error err)
 class StdStreamOut : public OutputStream
 {
 public:
-    StdStreamOut() { setmode(fileno(stdout), O_BINARY); }
     virtual void write(const char* buffer, int bufferSize)
     {
-        ::write(::fileno(stdout), buffer, bufferSize);
+        fwrite(buffer, 1, bufferSize, stdout);
     }
 };
 
