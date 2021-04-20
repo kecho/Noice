@@ -17,6 +17,7 @@ enum class ReturnCodes : int
 #define BLUE_TYPE "blue"
 #define WHITE_TYPE "white"
 #define PERLIN_TYPE "perlin"
+#define DEFAULT_NOISE_TYPE PERLIN_TYPE
 
 bool isAlias(std::string name, const char** aliases)
 {
@@ -35,7 +36,7 @@ struct ChannelParametes
     bool enabled = false;
     int seed = 0x1fee1bad;
     const char* channelName = "";
-    const char* noiseType = BLUE_TYPE;
+    const char* noiseType = DEFAULT_NOISE_TYPE;
     float rho2 = 2.1f;
 
     const char* perlinFrequenciesString = "";
