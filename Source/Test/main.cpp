@@ -2,6 +2,7 @@
 #include <functional>
 #include <string>
 #include "CliParseTests.h"
+#include "NoiseTests.h"
 
 
 enum : int { FailCode = 0xfa11 };
@@ -20,6 +21,10 @@ TestCase g_testRegistry [] = {
     { "Cli Tokenization 2", noice::cliTokenizer2 },
     { "Cli Tokenization 3", noice::cliTokenizer3 },
     { "Cli Grammar 0", noice::cliGrammar0 },
+    { "Blue Noise",  noice::blueNoiseTest  },
+    { "White Noise", noice::whiteNoiseTest },
+    { "Perlin 2d", noice::perlin2dTest },
+    { "Perlin 3d", noice::perlin3dTest }
 };
 
 int main(int argc, char* argv[])

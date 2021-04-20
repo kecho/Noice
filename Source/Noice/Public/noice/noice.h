@@ -77,6 +77,7 @@ struct TextureFileDesc
 //////////////////////////////////////
 
 TextureComponentHandle createTextureComponent();
+float* getPixels(TextureComponentHandle component);
 void deleteComponent(TextureComponentHandle& component);
 Error generateWhiteNoise    (TextureComponentHandle component, const WhiteNoiseGenDesc& desc,  int threadCount);
 Error generateBlueNoise     (TextureComponentHandle component, const BlueNoiseGenDesc& desc,   int threadCount);

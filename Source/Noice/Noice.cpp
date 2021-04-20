@@ -174,6 +174,18 @@ Error saveTextureToFile(const TextureFileDesc& desc)
     return err;
 }
 
+float* getPixels(TextureComponentHandle component)
+{
+    if (component.opaquePtr == nullptr)
+        return nullptr;
+
+    Image* img = Image::get(component);
+    if (img == nullptr || img->pixelCount() == 0)
+        return nullptr;
+
+    return img->img().data;
+}
+
 void deleteComponent(TextureComponentHandle& component)
 {
     if (component.opaquePtr == nullptr)
