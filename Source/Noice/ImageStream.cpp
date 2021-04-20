@@ -1,5 +1,5 @@
 #include <noice/noice.h>
-#include <ImfImage.h>
+#include <ImfChannelList.h>
 #include <ImfOutputFile.h>
 #include <ImfIO.h>
 #include <iostream>
