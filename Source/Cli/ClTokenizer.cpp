@@ -12,7 +12,27 @@ bool isDigit(char digit)
     return digit >= '0' && digit <= '9';
 }
 
-bool parseInteger(const std::string& p, int& output, bool& hasSign, int& charsParsed)
+bool parseBool(const std::string& p, bool& output, int& charsParsed)
+{
+    charsParsed = 0;
+    charsParsed += p.size();
+    if (p == "true")
+    {
+        output = true;
+        return true;
+    }
+    else if (p == "false")
+    {
+        output = false;
+        return true;
+    }
+    else
+        return false;
+}
+
+}
+
+bool ClTokenizer::parseInteger(const std::string& p, int& output, bool& hasSign, int& charsParsed)
 {
     hasSign = false;
     charsParsed = 0;
@@ -46,25 +66,129 @@ bool parseInteger(const std::string& p, int& output, bool& hasSign, int& charsPa
     return true;
 }
 
-bool parseBool(const std::string& p, bool& output, int& charsParsed)
+bool ClTokenizer::parseFloat(const std::string& p, float& output, int& charsParsed)
 {
-    charsParsed = 0;
-    charsParsed += p.size();
-    if (p == "true")
+    int first = 0;
+    bool hasSign = false;
+    if (p[0] != '.')
     {
-        output = true;
+        if (!parseInteger(p, first, hasSign, charsParsed))
+            return false;
+    }
+
+    const char* cs = p.c_str() + charsParsed;
+    if (!*cs)
+    {
+        output = (float)first;
         return true;
     }
-    else if (p == "false")
-    {
-        output = false;
-        return true;
-    }
-    else
+
+    int tail = 0;
+    char separator = *cs;
+    if (separator != '.' && separator != 'e')
         return false;
+
+    ++charsParsed;
+    ++cs;
+    int charsParsed2 = 0;
+    std::string tailString = cs;
+    if (!parseInteger(tailString, tail, hasSign, charsParsed2))
+        return false;
+
+    if (hasSign && separator == '.')
+        return false;
+
+    cs = tailString.c_str() + charsParsed2;
+
+    charsParsed += charsParsed2;
+    float multi = 1.0f;
+    if (separator == '.')
+    {
+        for (int i = 0; i < charsParsed2; ++i)
+            multi *= 10.0f;
+        float sign = first >= 0.0f ? 1.0f : -1.0f;
+        output = (float)first + sign*(float)tail*(1.0f/(float)multi);
+        return true;
+    }
+    else if (separator == 'e')
+    {
+        if (tail > 64)
+            return false;
+
+        if (tail > 0)
+            for (int i = 0; i < tail; ++i)
+                multi *= 10.0f;
+        else
+            for (int i = 0; i < std::abs(tail); ++i)
+                multi /= 10.0f;
+
+        output = (float)first * (float)multi;
+        return true;
+    }
+
+    return false;
 }
 
+std::vector<std::string> ClTokenizer::splitString(const std::string& s, char splitChar)
+{
+    std::vector<std::string> split;
+
+    std::stringstream tmp;
+    const char* cs = s.c_str();
+    while (cs && *cs)
+    {
+        tmp.write(cs, 1);
+        ++cs;
+        if (!*cs || *cs == splitChar)
+        {
+            if (*cs == splitChar) ++cs;
+            split.push_back(tmp.str());
+            tmp = std::stringstream();
+        }
+    }
+
+    return split;
 }
+
+bool ClTokenizer::parseIntList  (std::vector<int>& outList, const std::string& inputString, char token)
+{
+    outList.clear();
+    auto stringList = splitString(inputString, token);
+    bool unusedVal;
+    int parsedCount;
+    for (const auto& s : stringList)
+    {
+        int intOut = 0;
+        if (!parseInteger(s, intOut, unusedVal, parsedCount))
+            return false;
+
+        if (((int)s.size() - 1) != parsedCount)
+            return false;
+
+        outList.push_back(intOut);
+    }
+
+    return true;
+}
+
+bool ClTokenizer::parseFloatList(std::vector<float>& outList, const std::string& inputString, char token)
+{
+    outList.clear();
+    auto stringList = splitString(inputString, token);
+    int parsedCount;
+    for (const auto& s : stringList)
+    {
+        float floatOut = 0;
+        if (!parseFloat(s, floatOut, parsedCount))
+            return false;
+
+
+        outList.push_back(floatOut);
+    }
+
+    return true;
+}
+
 std::string ClTokenizer::toString(const ClTokenizer::Token& t)
 {
     std::stringstream ss;

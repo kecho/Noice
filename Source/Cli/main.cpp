@@ -42,8 +42,8 @@ struct ChannelParametes
 struct ArgParameters
 {
     int width = 128;
-    int height = 0;
-    int depth = 1;
+    int height = -1;
+    int depth = -1;
     int threadCount = 16;
     bool printHelp = false;
     bool quiet = false;
@@ -188,6 +188,25 @@ void printProgress(const noice::EventArguments& args)
 
 ReturnCodes work(const ArgParameters& parameters)
 {
+    //parameter validation
+    if (parameters.width == 0)
+    {
+        std::cerr << "Width cannot be 0." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.height == 0)
+    {
+        std::cerr << "Height cannot be 0." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
+    if (parameters.depth == 0)
+    {
+        std::cerr << "Depth cannot be 0." << std::endl;
+        return ReturnCodes::BadCmdArgs;
+    }
+
     const char* channelNames[] = { "r", "g", "b", "a" };
 
     noice::TextureFileDesc outDesc;
@@ -304,8 +323,10 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (parameters.height == 0)
+    if (parameters.height < 0)
         parameters.height = parameters.width;
+    if (parameters.depth < 0)
+        parameters.depth = 1;
 
     bool useDefaultChannel = true;
     for (int i = 0; i < 4; ++i)

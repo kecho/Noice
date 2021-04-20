@@ -155,6 +155,134 @@ bool cliTokenizer1()
     return true;
 }
 
+static bool compFloat(float a, float b)
+{
+    return std::abs(a - b) < 0.000001f;
+}
+
+bool cliTokenizer2()
+{
+    struct Case
+    {
+        const char* str;
+        float val;
+        bool expectSuccess;
+    };
+
+    Case cases[] = {
+        { "0", 0.0f, true } ,
+        { "57e12", 57e12f, true },
+        { ".44", 0.44f, true },
+        { "0.1", 0.1f, true },
+        { "1.0", 1.0f, true },
+        { "57e-5", 57e-5f, true },        
+        { "57e--12", 57e-12f, false },
+        { "-3.5567", -3.5567f, true },
+        { "-3a.ffe1", -3.112f, false },
+        { "3e.-ffe1", 0.0f, false }
+    };
+
+    for (const Case& c : cases)
+    {
+        std::string s = c.str;
+        float output = 0.0f;
+        int charsParsed = 0;
+        bool success = ClTokenizer::parseFloat(s, output, charsParsed);
+        bool matches = compFloat(output, c.val);
+        if (success == c.expectSuccess && success)
+            if(matches)
+                continue;            
+            else
+            {
+                std::cerr << "Incorrect parsing, got \"" << c.str << "\" resulted in " << output << std::endl;
+                return false;
+            }
+
+        if (!success && c.expectSuccess)
+        {
+            std::cerr << "Failed parsing: \"" << c.str << "\" returned: " << output << std::endl;
+            return false;
+        }
+
+        if (success && !c.expectSuccess)
+        {
+            std::cerr << "False success parsing: \"" << c.str << "\" returned: " << output << std::endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static inline bool compareNumber(int a, int b) { return a == b; }
+static inline bool compareNumber(float a, float b) { return compFloat(a, b); }
+
+template<typename T>
+bool compLists(const std::vector<T>& a, const std::vector<T>& b)
+{
+    if (a.size() != b.size())
+        return false;
+
+    for (int i = 0; i < (int)a.size(); ++i)
+    {
+        if (!compareNumber(a[i], b[i]))
+            return false;
+    }
+
+    return true;
+}
+
+bool cliTokenizer3()
+{
+    struct CaseF
+    {
+        const char* str;
+        std::vector<float> expected;
+        bool expectSuccess;
+    };
+
+    CaseF cases[] = {
+        { "", {}, true },
+        { "1.0x2e-5x79x-10.2", { 1.0f, 2e-5f, 79.0f, -10.2f }, true },
+        { "x12x29xxx9", { 0.0f, 12.0f, 29.0f, 0.0f, 0.0f, 9.0f }, false }
+    };
+
+    auto compFloat = [](float a, float b)
+    {
+        return std::abs(a - b) < 0.000001f;
+    };
+
+    for (const CaseF& c : cases)
+    {
+        std::string inputStr = c.str;
+        std::vector<float> outList;
+        bool result = ClTokenizer::parseFloatList(outList, inputStr, 'x');
+        bool match = compLists(outList, c.expected);
+        if (result == c.expectSuccess && result)\
+            if (!match)
+            {
+                std::cerr << "Incorrect parsing: " << c.str << std::endl;
+                return false;
+            }
+            else
+                continue;
+
+        if (!result && c.expectSuccess)
+        {
+            std::cerr << "Failed parsing: " << c.str << std::endl;
+            return false;
+        }
+
+        if (result && !c.expectSuccess)
+        {
+            std::cerr << "False success parsing :" << c.str << std::endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool cliGrammar0()
 {
     struct SimpleStruct

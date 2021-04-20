@@ -2,6 +2,7 @@
 
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace noice
 {
@@ -50,6 +51,11 @@ public:
 
     static std::string toString(const Token& t);
     static const char* toString(CliParamType type);
+    static std::vector<std::string> splitString(const std::string& s, char splitChar);
+    static bool parseInteger(const std::string& p, int& output, bool& hasSign, int& charsParsed);
+    static bool parseFloat(const std::string& p, float& output, int& charsParsed);
+    static bool parseIntList  (std::vector<int>& outList, const std::string& inputString, char token);
+    static bool parseFloatList(std::vector<float>& outList, const std::string& inputString, char token);
 
     void init(int argc, char* argv[])
     {
@@ -67,7 +73,6 @@ private:
     int m_argc = 0;
     char** m_argv;
 };
-
 
 
 }
