@@ -12,6 +12,7 @@ local LibIncludes = {
 }
 
 local Libs = {
+    "bsd",
     "External/OpenEXR/staticlib/IlmImf-2_5.lib",
     "External/OpenEXR/staticlib/IlmImfUtil-2_5.lib",
     "External/OpenEXR/staticlib/Half-2_5.lib",

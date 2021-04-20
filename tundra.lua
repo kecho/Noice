@@ -30,6 +30,24 @@ Build {
                 ISPC = "Tools$(SEP)ispc-v1.15.0-windows$(SEP)bin$(SEP)ispc.exe", 
             },
         },
+        {
+            Name = "linux-gcc",
+            DefaultOnHost = "linux",
+            Tools = { "gcc", "ispc" },
+            Env = {
+                ISPCOPTS = {
+                    "--target=sse4 --cpu=corei7",
+                    { "--arch=x86-64" },
+                },
+                CPPPATH = {
+                    "$(OBJECTDIR)$(SEP)Source"
+                },
+                CXXOPTS = { "-std=c++17" },
+            },
+            ReplaceEnv = {
+                ISPC = "Tools$(SEP)ispc-v1.15.0-linux$(SEP)bin$(SEP)ispc", 
+            },
+        },
     },
     
     Env = {
