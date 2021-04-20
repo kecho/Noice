@@ -33,7 +33,7 @@ bool isAlias(std::string name, const char** aliases)
 struct ChannelParametes
 {
     bool enabled = false;
-    int seed = 0x12feebade;
+    int seed = 0x1fee1bad;
     const char* channelName = "";
     const char* noiseType = BLUE_TYPE;
     float rho2 = 2.1f;
