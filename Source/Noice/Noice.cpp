@@ -35,15 +35,6 @@ const char* getErrorString(Error err)
     return sErrorString[(int)err];
 }
 
-class StdStreamOut : public OutputStream
-{
-public:
-    virtual void write(const char* buffer, int bufferSize)
-    {
-        fwrite(buffer, 1, bufferSize, stdout);
-    }
-};
-
 class FileStreamOut : public OutputStream
 {
 public:

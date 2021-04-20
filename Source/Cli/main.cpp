@@ -115,6 +115,20 @@ struct ArgParameters
     }
 };
 
+class StdStreamOut : public noice::OutputStream
+{
+public:
+    StdStreamOut() { fdopen(fileno(stdout), "wb"); }
+    virtual void write(const char* buffer, int bufferSize)
+    {
+        fwrite(buffer, 1, bufferSize, stdout);
+    }
+
+private:
+    FILE* m_stdout = nullptr;
+};
+
+
 void printHeader()
 {
     std::cout << ">>Noice<<" << std::endl;
@@ -169,10 +183,12 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
         "Disables the progress bar output", "g", "disable_progbar", 
         Bool, ArgParameters, disableProgbar);
 
-    CliSwitch(generalGid,
-        "Streams the texture file through the standard output. Only binary data is output. "
-        "When enabled this program automatically goes into quiet mode.", "p", "pipe", 
-        Bool, ArgParameters, pipe);
+    //Turning off feature for now:
+    //TODO figure out how to do this cross platform: turns out it isnt as easy :)
+    //CliSwitch(generalGid,
+    //    "Streams the texture file through the standard output. Only binary data is output. "
+    //    "When enabled this program automatically goes into quiet mode.", "p", "pipe", 
+    //    Bool, ArgParameters, pipe);
 
     CliSwitch(generalGid, 
         "Number of software threads to utilize for computation (default is 16)",
@@ -330,7 +346,17 @@ ReturnCodes work(const ArgParameters& parameters)
         usedHandles.push_back(currentHandle);
     }
 
-    noice::Error err = saveTextureToFile(outDesc);
+    noice::Error err = noice::Error::Ok;
+    if (parameters.pipe)
+    {
+        StdStreamOut stdStreamOut;
+        err = saveTextureToStream(outDesc, stdStreamOut);
+    }
+    else
+    {
+        err = saveTextureToFile(outDesc);
+    }
+
     if (err != noice::Error::Ok)
     {
         std::cerr << "Texture output error: " << noice::getErrorString(err);
@@ -432,6 +458,7 @@ ReturnCodes validateAndProcessParameters(ArgParameters& parameters)
         std::cerr << "Depth cannot be greater than 4096." << std::endl;
         return ReturnCodes::BadCmdArgs;
     }
+
     return ReturnCodes::Success;
 }
 
@@ -451,6 +478,9 @@ int main(int argc, char* argv[])
     {
         return (int)ReturnCodes::BadCmdArgs;
     }
+    
+    if (parameters.pipe)
+        parameters.quiet = true;
 
     if (!parameters.readDimensions())
     {
@@ -487,7 +517,6 @@ int main(int argc, char* argv[])
     auto validationResult = validateAndProcessParameters(parameters);
     if (validationResult != ReturnCodes::Success)
         return (int)validationResult;
-
 
     if (!parameters.quiet)
     {
