@@ -2,7 +2,11 @@
 
 Noice is a command line Noise generator utility, by Kleber Garcia.
 
+[Windows and Linux binaries v1.0.0](https://github.com/kecho/Noice/releases/tag/1.0.0)
+
 ![blue perlin example](Misc/noisedemosall.png?raw=true "noise demos.")
+
+For linux make sure to run the linux-dependencies script, or manually install the dependencies mentioned in the file.
 
 ## Usage
 
