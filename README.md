@@ -2,7 +2,7 @@
 
 Noice is a command line Noise generator utility, by Kleber Garcia.
 
-![blue perlin example](Misc/noisedemos.png?raw=true "noise demos.")
+![blue perlin example](Misc/noisedemosall.png?raw=true "noise demos.")
 
 ## Usage
 
@@ -48,7 +48,7 @@ noirce -n perlin -d 32x32x32
 ```
 
 Resulting in this:
-//TODO IMAGE
+![3d perlin](Misc/3dperlin.png?raw=true "3d perlin.")
 
 Volume textures are layed out vertically. Engines, such as unity can provide simple tools to import these textures.
 
@@ -107,6 +107,7 @@ All build artifacts will be located in the t2-output directory.
 ## Contributing
 
 Contributions and pull requests are very much welcome! please run the tests when doing so, and ensure to add new tests if necessary.
+To run the tests, just find the built noice_test application and run it.
 
 
 
