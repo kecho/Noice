@@ -33,7 +33,7 @@ local Libs = {
         Config = { "win64-msvc-*" }
     },
     {
-        "IlmImf", "tbb",
+        "IlmImf", "Iex", "tbb",
         Config = { "linux-gcc-*" }
     }
 }
