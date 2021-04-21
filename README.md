@@ -50,9 +50,7 @@ noirce -n perlin -d 32x32x32
 Resulting in this:
 //TODO IMAGE
 
-Volume textures are layed out vertically. Engines, such as unity can provide simple tools to import these textures:
-//TODO Image
-
+Volume textures are layed out vertically. Engines, such as unity can provide simple tools to import these textures.
 
 ## Features
 
