@@ -27,12 +27,25 @@ DefRule {
 
     local src = data.Source
     local base_name = path.drop_suffix(src) 
-    local objFile = "$(OBJECTDIR)$(SEP)" .. base_name .. "__" .. path.get_extension(src):sub(2) .. "$(OBJECTSUFFIX)"
+
+    local function objFileName(arch)
+        return "$(OBJECTDIR)$(SEP)" .. base_name .. "__" .. path.get_extension(src):sub(2) .. arch .. "$(OBJECTSUFFIX)"
+    end
+
+    local mainOutputFile = objFileName("");
     local hFile = "$(OBJECTDIR)$(SEP)" .. base_name .. ".ispc.h"
+    local outputFiles = {
+        hFile,
+        mainOutputFile,
+        objFileName("_avx2"),
+        objFileName("_avx512skx"),
+        objFileName("_sse4")
+    };
+
     return {
         InputFiles = inputFiles,
-        OutputFiles = { objFile, hFile },
-        Command = "$(ISPC) $(ISPCOPTS) -o $(@:[1]) -h $(@:[2]) "..src
+        OutputFiles = outputFiles,
+        Command = "$(ISPC) $(ISPCOPTS) -o "..mainOutputFile.." -h " .. hFile ..  " "..src
     }
   end,
 }

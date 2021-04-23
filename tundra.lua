@@ -18,7 +18,7 @@ Build {
             Tools = { "msvc-vs2019", "ispc" },
             Env = {
                 ISPCOPTS = {
-                    "--target=sse4 --cpu=corei7",
+                    "--target=sse4-i32x4,avx2-i32x8,avx512skx-i32x16",
                     { "--arch=x86-64" },
                 },
                 CPPPATH = {
@@ -36,7 +36,7 @@ Build {
             Tools = { "gcc", "ispc" },
             Env = {
                 ISPCOPTS = {
-                    "--target=sse4 --cpu=corei7 --pic",
+                    "--target=sse4-i32x4,avx2-i32x8,avx512skx-i32x16 --pic",
                     { "--arch=x86-64" },
                 },
                 CPPPATH = {

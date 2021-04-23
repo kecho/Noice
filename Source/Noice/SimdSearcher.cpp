@@ -11,18 +11,19 @@ SimdSearcher::SimdSearcher(int w, int h, int d, unsigned randomSeed, int jobCoun
 , m_w(w)
 , m_h(h)
 , m_d(d)
-, m_jobCount(jobCount)
+, m_jobCount(nextPowOf2(jobCount))
 {
+    int pixelCount = w*h*d;
+
     for (auto& s : m_tmpScatterStates)
         s.resize(m_pixelCount >> 1);
 
     ispc::InitPixelStates(m_imgScatterState.data(), (unsigned)m_imgScatterState.size(), (unsigned)m_w, (unsigned)m_h, (unsigned)m_d);
 
-    int jobPixelSz = divUp<int>(m_pixelCount, jobCount); 
-
+    int jobPixelSz = divUp<int>(m_pixelCount, m_jobCount);
     int offset = 0;
     int pixelsLeft = m_pixelCount;
-    for (int i = 0; i < jobCount && pixelsLeft > 0; ++i)
+    for (int i = 0; i < m_jobCount && pixelsLeft > 0; ++i)
     {
         m_jobContexts.emplace_back();
         JobContext& j = m_jobContexts.back();
