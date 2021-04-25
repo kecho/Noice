@@ -1,3 +1,8 @@
+## Noise v1.0.2
+
+### Bug fix
+* Improved produced blue noise dithering at the end of the spectrum by doing the 2 steps in void and cluster algorithm.
+
 ## Noise v1.0.1
 
 ### Features
