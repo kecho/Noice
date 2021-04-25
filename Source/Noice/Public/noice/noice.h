@@ -13,6 +13,12 @@ public:
     virtual void write(const char* buffer, int bufferSize) = 0;
 };
 
+class InputStream
+{
+public:
+    virtual bool read(const char* buffer, int bufferSize) = 0;
+};
+
 enum class Error
 {
     Ok,
@@ -34,11 +40,7 @@ const char* getErrorString(Error err);
 struct TextureComponentHandle
 {
     void* opaquePtr = 0;
-};
-
-enum class Channels
-{
-    R, G, B, A, Count
+    bool valid() const { return opaquePtr != 0; }
 };
 
 struct TextureComponentDesc
@@ -85,6 +87,7 @@ Error generateBlueNoise     (TextureComponentHandle component, const BlueNoiseGe
 Error generatePerlinNoise   (TextureComponentHandle component, const PerlinNoiseGenDesc& desc, int threadCount);
 Error saveTextureToFile     (const TextureFileDesc& desc);
 Error saveTextureToStream   (const TextureFileDesc& desc, OutputStream& outStream);
+Error loadTextureFromFile   (const char* fileName, TextureComponentHandle components[4]);
 
 
 ////////////////////////////////////////////////////////

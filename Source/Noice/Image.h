@@ -21,7 +21,7 @@ public:
     inline int height() const { return m_img.height; }
     inline int depth()  const { return m_img.depth;  }
 
-    TextureComponentHandle asHandle() 
+    TextureComponentHandle asHandle()
     {
         return TextureComponentHandle { this };
     }

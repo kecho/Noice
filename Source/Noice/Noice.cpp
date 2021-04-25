@@ -127,7 +127,7 @@ Error saveTextureToStream(const TextureFileDesc& desc, OutputStream& outStream)
     int width  = -1;
     int height = -1;
     int depth  = -1;
-    for (int c = 0; c < (int)Channels::Count; ++c)
+    for (int c = 0; c < 4; ++c)
     {
         const TextureComponentHandle& component = desc.channels[c];
         if (component.opaquePtr == nullptr)
@@ -166,6 +166,20 @@ Error saveTextureToFile(const TextureFileDesc& desc)
     Error err = saveTextureToStream(desc, fileStream);
     fileStream.close();
     return err;
+}
+
+Error loadTextureFromFile(const char* filename, TextureComponentHandle outputChannels[4])
+{
+    Channel channels[4];
+    Error ret = streamInImage(filename, channels);
+    for (int c = 0; c < 4; ++c)
+    {
+        if (channels[c].image == nullptr)
+            continue;
+        
+        outputChannels[c] = channels[c].image->asHandle();
+    }
+    return ret;
 }
 
 float* getPixels(TextureComponentHandle component)

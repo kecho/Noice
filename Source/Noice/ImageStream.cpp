@@ -1,6 +1,7 @@
 #include <noice/noice.h>
 #include <ImfChannelList.h>
 #include <ImfOutputFile.h>
+#include <ImfInputFile.h>
 #include <ImfStringAttribute.h>
 #include <ImfIO.h>
 #include <iostream>
@@ -100,6 +101,94 @@ Error streamOutImage(
         return Error::IoIssue;
     }
 
+    return Error::Ok;
+}
+
+class StreamInWrapper : public Imf::IStream
+{
+public:
+    StreamInWrapper(InputStream& istream, const char* filename) : m_istream(istream), IStream(filename) {}
+
+    virtual bool read (const char c[], int n) 
+    {
+        bool ret = m_istream.read(c, n);
+        m_p += n;
+        return ret;
+    }
+
+    virtual Imath::Int64 tellg ()
+    {
+        return (Imath::Int64)m_p;
+    }
+
+    virtual void seekg (Imath::Int64 pos) 
+    {
+        m_p = pos;
+    }
+
+private:
+    Imath::Int64 m_p = 0;
+    InputStream& m_istream;
+
+};
+
+Error streamInImage(
+    const char* filename,
+    Channel outputChannels[4])
+{
+    try
+    {
+        Imf::InputFile inputFile(filename);
+        Imath::Box2i dw = inputFile.header().dataWindow();
+        int width = dw.max.x - dw.min.x + 1;
+        int height = dw.max.y - dw.min.y + 1;
+        int depth = 1;
+
+        Imf::FrameBuffer frameBuffer;
+        const Imf::ChannelList& channels = inputFile.header().channels();
+        const char* channelNames[4] = { "R", "G", "B", "A" };
+        for (int channelId = 0; channelId < 4; ++channelId)
+        {
+            const Imf::Channel* channelObject = channels.findChannel(channelNames[channelId]);        
+            if (channelObject == nullptr)
+                continue;
+
+            if (channelObject->type != Imf::PixelType::FLOAT)
+            {
+                std::cerr << "Warning: channel" << channelNames[channelId] << "of " << filename << "Must be a float. It will be ignored." << std::endl;
+                continue;
+            }
+
+            if (channelObject->xSampling > 1 || channelObject->ySampling > 1)
+            {
+                std::cerr << "Warning: channel" << channelNames[channelId] << "of " << filename
+                    << "Must have sampling amount of 1 for x and y. Found x " << channelObject->xSampling
+                    << " and y " << channelObject->ySampling << std::endl;
+                continue;
+            }
+
+            auto* image = new Image();
+            outputChannels[channelId].image = image;
+            image->init(width, height, depth);
+
+            frameBuffer.insert (
+                channelNames[channelId],
+                Imf::Slice (
+                    Imf::PixelType::FLOAT, // type
+                    (char*)image->img().data,
+                    sizeof(float),
+                    sizeof(float)*width)
+            );
+        }
+
+        inputFile.setFrameBuffer(frameBuffer);
+        inputFile.readPixels(0, height - 1);
+    }
+    catch (const std::exception& exc)
+    {
+        std::cerr << exc.what() << std::endl;
+        return Error::IoIssue;
+    }
     return Error::Ok;
 }
 

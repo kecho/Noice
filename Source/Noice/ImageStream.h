@@ -10,7 +10,7 @@ class OutputStream;
 
 struct Channel
 {
-    const Image* image = nullptr;
+    Image* image = nullptr;
 };
 
 Error streamOutImage(
@@ -18,6 +18,10 @@ Error streamOutImage(
     OutputStream& output,
     int width, int height, int depth,
     const Channel* rgba[4]);
+
+Error streamInImage(
+    const char* filename,
+    Channel outputChannels[4]);
 
 
 }
