@@ -17,6 +17,9 @@ public:
     int pixelCount() const { return (int)m_support.size(); }
     inline float& operator[](int index) { return m_support[index]; }
     inline float  operator[](int index) const { return m_support[index]; }
+    inline int width()  const { return m_img.width;  } 
+    inline int height() const { return m_img.height; }
+    inline int depth()  const { return m_img.depth;  }
 
     TextureComponentHandle asHandle() 
     {

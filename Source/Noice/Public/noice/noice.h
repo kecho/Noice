@@ -41,28 +41,26 @@ enum class Channels
     R, G, B, A, Count
 };
 
-struct BlueNoiseGenDesc
+struct TextureComponentDesc
 {
     int width  = 64;
     int height = 64;
     int depth  = 1;
+};
+
+struct BlueNoiseGenDesc
+{
     float rho2 = 2.1f;
     unsigned seed = 0xdeadbeef;
 };
 
 struct WhiteNoiseGenDesc
 {
-    int width  = 64;
-    int height = 64;
-    int depth  = 1;
     unsigned seed = 0xdeadbeef;
 };
 
 struct PerlinNoiseGenDesc
 {
-    int width  = 64;
-    int height = 64;
-    int depth  = 1;
     unsigned seed = 0xdeadbeef;
     const float* frequencies = nullptr;
     const float* weights = nullptr;
@@ -79,7 +77,7 @@ struct TextureFileDesc
 // Main API to build noise textures //
 //////////////////////////////////////
 
-TextureComponentHandle createTextureComponent();
+TextureComponentHandle createTextureComponent(const TextureComponentDesc& componentDesc);
 float* getPixels(TextureComponentHandle component);
 void deleteComponent(TextureComponentHandle& component);
 Error generateWhiteNoise    (TextureComponentHandle component, const WhiteNoiseGenDesc& desc,  int threadCount);

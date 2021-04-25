@@ -89,7 +89,6 @@ Error perlinNoiseGenerator(
     Image& output)
 {
     Error result = Error::Ok;
-    output.init(desc.width, desc.height, desc.depth);
     output.startStopwatch();
     output.clear(0.0f); 
     EventArguments callbackArgs;
@@ -119,15 +118,13 @@ Error perlinNoiseGenerator(
         float frequency = frequencies[i];
         int gridWidth  = (int)std::ceil(frequency);
         int gridHeight = (int)std::ceil(frequency);
-        int gridDepth  = (int)std::ceil(desc.depth > 1 ? frequency : 1);
+        int gridDepth  = (int)std::ceil(output.depth() > 1 ? frequency : 1);
     
         Image randomDirectionsImg;
         {
-            WhiteNoiseGenDesc whiteNoiseDesc;
             Image scrambleTexture;
-            whiteNoiseDesc.width  = gridWidth;
-            whiteNoiseDesc.height = gridHeight;
-            whiteNoiseDesc.depth  = gridDepth;
+            scrambleTexture.init(gridWidth, gridHeight, gridDepth, 1u);
+            WhiteNoiseGenDesc whiteNoiseDesc;
             whiteNoiseDesc.seed   = desc.seed;
             result = whiteNoiseGenerator(whiteNoiseDesc, threadCount, scrambleTexture);
             if (result != Error::Ok)
@@ -139,7 +136,7 @@ Error perlinNoiseGenerator(
         }
     
         {
-            KernelRunner<PerlinKernel> perlinKernel(desc.width, desc.height, desc.depth, threadCount);
+            KernelRunner<PerlinKernel> perlinKernel(output.width(), output.height(), output.depth(), threadCount);
             perlinKernel.kernel().setParameters(weight, randomDirectionsImg.img());
             perlinKernel.run(output.img());
         }

@@ -38,8 +38,6 @@ Error whiteNoiseGenerator(
     int threadCount,
     Image& output)
 {
-    output.init(desc.width, desc.height, desc.depth);
-
     output.startStopwatch();
 
     EventArguments callbackArgs;
@@ -47,7 +45,7 @@ Error whiteNoiseGenerator(
 
     //initialize values in simd
     {
-        KernelRunner<EnumKernel> enumKernel(desc.width, desc.height, desc.depth, threadCount);
+        KernelRunner<EnumKernel> enumKernel(output.width(), output.height(), output.depth(), threadCount);
         enumKernel.run(output.img());
     }
 

@@ -66,9 +66,10 @@ private:
     std::string m_filename;
 };
 
-TextureComponentHandle createTextureComponent()
+TextureComponentHandle createTextureComponent(const TextureComponentDesc& componentDesc)
 {
     auto img = new noice::Image();
+    img->init(componentDesc.width, componentDesc.height, componentDesc.depth, 1);
     return img->asHandle();
 }
 

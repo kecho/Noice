@@ -37,11 +37,13 @@ static bool checkDitherTexture(TextureComponentHandle component, int pixelCount)
 
 bool blueNoiseTest()
 {
-    TextureComponentHandle component = createTextureComponent();
+    TextureComponentDesc componentDesc;
+    componentDesc.width = 16;
+    componentDesc.height = 16;
+    componentDesc.depth = 16;
+    TextureComponentHandle component = createTextureComponent(componentDesc);
+
     BlueNoiseGenDesc desc;
-    desc.width = 16;
-    desc.height = 16;
-    desc.depth = 16;
     Error errCode = generateBlueNoise(component, desc, 8u);
     if (errCode != Error::Ok)
     {
@@ -50,7 +52,7 @@ bool blueNoiseTest()
     }
 
     //validate
-    int pixelCount = desc.width * desc.height* desc.depth;
+    int pixelCount = componentDesc.width * componentDesc.height* componentDesc.depth;
     if (!checkDitherTexture(component, pixelCount))
         return false;
 
@@ -60,11 +62,14 @@ bool blueNoiseTest()
 
 bool whiteNoiseTest()
 {
-    TextureComponentHandle component = createTextureComponent();
+    TextureComponentDesc componentDesc;
+    componentDesc.width = 16;
+    componentDesc.height = 16;
+    componentDesc.depth = 16;
+
+    TextureComponentHandle component = createTextureComponent(componentDesc);
+
     WhiteNoiseGenDesc desc;
-    desc.width = 16;
-    desc.height = 16;
-    desc.depth = 16;
     Error errCode = generateWhiteNoise(component, desc, 8u);
     if (errCode != Error::Ok)
     {
@@ -73,7 +78,7 @@ bool whiteNoiseTest()
     }
 
     //validate
-    int pixelCount = desc.width * desc.height* desc.depth;
+    int pixelCount = componentDesc.width * componentDesc.height * componentDesc.depth;
     if (!checkDitherTexture(component, pixelCount))
         return false;
 
@@ -83,12 +88,15 @@ bool whiteNoiseTest()
 
 static bool perlinTestCommon(int depth)
 {
-    TextureComponentHandle component = createTextureComponent();
+    TextureComponentDesc componentDesc;
+    componentDesc.width = 32;
+    componentDesc.height = 32;
+    componentDesc.depth = depth;
+    TextureComponentHandle component = createTextureComponent(componentDesc);
+
     PerlinNoiseGenDesc desc;
-    desc.width = 32;
-    desc.height = 32;
-    desc.depth = depth;
     Error err = generatePerlinNoise(component, desc, 8u);
+
     if (err != Error::Ok)
         return false;
     deleteComponent(component);

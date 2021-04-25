@@ -288,7 +288,12 @@ ReturnCodes work(const ArgParameters& parameters)
             continue;
 
         std::string noiseType = channelParmeters.noiseType;
-        currentHandle = noice::createTextureComponent();
+        
+        noice::TextureComponentDesc componentDesc;
+        componentDesc.width  = (int)parameters.width;
+        componentDesc.height = (int)parameters.height;
+        componentDesc.depth  = (int)parameters.depth;
+        currentHandle = noice::createTextureComponent(componentDesc);
         if (!parameters.quiet && !parameters.disableProgbar)
         {
             progressInfo.msgPrefix = channelNames[i];
@@ -306,9 +311,6 @@ ReturnCodes work(const ArgParameters& parameters)
         if (noiseType == BLUE_TYPE) 
         {
             noice::BlueNoiseGenDesc desc;
-            desc.width  = (int)parameters.width;
-            desc.height = (int)parameters.height;
-            desc.depth  = (int)parameters.depth;
             desc.seed = (unsigned)channelParmeters.seed;
             desc.rho2 = channelParmeters.rho2;
             err = generateBlueNoise(currentHandle, desc, parameters.threadCount);
@@ -316,18 +318,12 @@ ReturnCodes work(const ArgParameters& parameters)
         else if (noiseType == WHITE_TYPE)
         {
             noice::WhiteNoiseGenDesc desc;
-            desc.width  = (int)parameters.width;
-            desc.height = (int)parameters.height;
-            desc.depth  = (int)parameters.depth;
             desc.seed = (unsigned)channelParmeters.seed;
             err = generateWhiteNoise(currentHandle, desc, parameters.threadCount);
         }
         else if (noiseType == PERLIN_TYPE)
         {
             noice::PerlinNoiseGenDesc desc;
-            desc.width  = (int)parameters.width;
-            desc.height = (int)parameters.height;
-            desc.depth  = (int)parameters.depth;
             desc.seed = (unsigned)channelParmeters.seed;
             desc.frequencies = channelParmeters.perlinFrequencies.data();
             desc.weights = channelParmeters.perlinWeights.data();

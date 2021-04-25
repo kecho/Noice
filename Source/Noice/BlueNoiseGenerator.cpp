@@ -61,20 +61,23 @@ static Error blueNoiseGeneratorTemplate(
 {
     using TimeType = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
-    int wh = desc.width * desc.height;
-    output.init(desc.width, desc.height, desc.depth);
+    int wh = output.width() * output.height();
+    output.init(output.width(), output.height(), output.depth());
 
-    SimdSearcher searcher(desc.width, desc.height, desc.depth, desc.seed, threadCount);
-    KernelRunner<DistanceKernel> distanceKernel(desc.width, desc.height, desc.depth, threadCount);
+    SimdSearcher searcher(output.width(), output.height(), output.depth(), desc.seed, threadCount);
+    KernelRunner<DistanceKernel> distanceKernel(output.width(), output.height(), output.depth(), threadCount);
     distanceKernel.kernel().setRho2(desc.rho2);
 
     noice::Image distancePixels;
-    distancePixels.init(desc.width, desc.height, desc.depth);
+    distancePixels.init(output.width(), output.height(), output.depth());
     distancePixels.clear(0.0f);
 
     ispc::PixelState currentPixel = {};
 
     output.startStopwatch();
+
+    int width = output.width();
+    int height = output.height();
     
     EventArguments callbackArgs;
     callbackArgs.userData = eventUserData;
@@ -91,8 +94,8 @@ static Error blueNoiseGeneratorTemplate(
         int offset = ispc::GetOffset(currentPixel);
         output[offset] = rank;
         
-        int currX = offset % desc.width;
-        int currY = (offset / desc.width) % desc.height;
+        int currX = offset % width;
+        int currY = (offset / width) % height;
         int currZ = (offset / wh);
         
         distanceKernel.kernel().args(currX, currY, currZ);
