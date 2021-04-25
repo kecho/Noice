@@ -79,9 +79,14 @@ static Error blueNoiseGeneratorTemplate(
     EventArguments callbackArgs;
     callbackArgs.userData = eventUserData;
     int eventCounter = 0;
+    int halfPixel = output.pixelCount() >> 1;
     for (int pixelIt = 0; pixelIt < output.pixelCount(); ++pixelIt)
     {
-        float rank = (float)pixelIt / (float)output.pixelCount();
+        int pixelIndex = pixelIt;
+        if (pixelIt >= halfPixel)
+            pixelIndex = (output.pixelCount() + halfPixel) - pixelIt - 1;
+
+        float rank = (float)pixelIndex / (float)output.pixelCount();
         searcher.setValidity(currentPixel, false);
         int offset = ispc::GetOffset(currentPixel);
         output[offset] = rank;
@@ -104,6 +109,9 @@ static Error blueNoiseGeneratorTemplate(
             }
             ++eventCounter;
         }
+
+        if (pixelIt == (halfPixel - 1))
+            distancePixels.clear(0.0f);
     }
 
     output.endStopwatch();
