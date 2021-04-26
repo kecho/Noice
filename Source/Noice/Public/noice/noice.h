@@ -13,12 +13,6 @@ public:
     virtual void write(const char* buffer, int bufferSize) = 0;
 };
 
-class InputStream
-{
-public:
-    virtual bool read(const char* buffer, int bufferSize) = 0;
-};
-
 enum class Error
 {
     Ok,

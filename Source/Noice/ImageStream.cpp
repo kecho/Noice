@@ -104,34 +104,6 @@ Error streamOutImage(
     return Error::Ok;
 }
 
-class StreamInWrapper : public Imf::IStream
-{
-public:
-    StreamInWrapper(InputStream& istream, const char* filename) : m_istream(istream), IStream(filename) {}
-
-    virtual bool read (const char c[], int n) 
-    {
-        bool ret = m_istream.read(c, n);
-        m_p += n;
-        return ret;
-    }
-
-    virtual Imath::Int64 tellg ()
-    {
-        return (Imath::Int64)m_p;
-    }
-
-    virtual void seekg (Imath::Int64 pos) 
-    {
-        m_p = pos;
-    }
-
-private:
-    Imath::Int64 m_p = 0;
-    InputStream& m_istream;
-
-};
-
 Error streamInImage(
     const char* filename,
     Channel outputChannels[4])
