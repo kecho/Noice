@@ -58,7 +58,7 @@ extern void DftKernel(
         {
             float w = x - (halfSize);
             float2 value = { 0.0f, 0.0f };
-            for (int k = 0; k < size; ++k)
+            cfor (int k = 0; k < size; ++k)
             {
                 #pragma ignore warning(perf)
                 float4 sample = inputRow[x + k];
