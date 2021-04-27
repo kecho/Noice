@@ -69,6 +69,11 @@ struct TextureFileDesc
     TextureComponentHandle channels[4] = {};
 };
 
+struct DftOptions
+{
+    int threadCount = 16;
+};
+
 //////////////////////////////////////
 // Main API to build noise textures //
 //////////////////////////////////////
@@ -82,7 +87,7 @@ Error generatePerlinNoise   (TextureComponentHandle component, const PerlinNoise
 Error saveTextureToFile     (const TextureFileDesc& desc);
 Error saveTextureToStream   (const TextureFileDesc& desc, OutputStream& outStream);
 Error loadTextureFromFile   (const char* fileName, TextureComponentHandle components[4]);
-Error generateDft           (TextureComponentHandle componentInput, TextureComponentHandle outputHandles[2]);
+Error generateDft           (TextureComponentHandle componentInput, TextureComponentHandle outputHandles[2], const DftOptions& options);
 
 
 ////////////////////////////////////////////////////////

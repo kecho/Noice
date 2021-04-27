@@ -183,7 +183,7 @@ Error loadTextureFromFile(const char* filename, TextureComponentHandle outputCha
     return ret;
 }
 
-Error generateDft (TextureComponentHandle componentInput, TextureComponentHandle outputHandles[2])
+Error generateDft (TextureComponentHandle componentInput, TextureComponentHandle outputHandles[2], const DftOptions& options)
 {
     if (!componentInput.valid())
         return Error::HandleIsNull;
@@ -205,7 +205,7 @@ Error generateDft (TextureComponentHandle componentInput, TextureComponentHandle
         outputTextures[i] = Image::get(outputHandle);
     }
 
-    return dftGenerator(*inputTexture, outputTextures);
+    return dftGenerator(*inputTexture, outputTextures, options);
 }
 
 float* getPixels(TextureComponentHandle component)

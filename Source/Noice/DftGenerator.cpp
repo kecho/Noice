@@ -4,7 +4,7 @@
 namespace noice
 {
 
-Error dftGenerator(const Image& input, Image* outputs[2])
+Error dftGenerator(const Image& input, Image* outputs[2], const DftOptions& options)
 {
     for (int i = 0; i < 2; ++i)
     {

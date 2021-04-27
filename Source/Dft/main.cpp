@@ -19,6 +19,7 @@ struct ArgParameters
 {
     const char* inputExr = nullptr;
     const char* outputPrefix = nullptr;
+    unsigned threadCount = 16;
     bool quiet = false;
     bool printHelp = false;
 };
@@ -38,6 +39,11 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
     CliSwitch(generalGid, "Source input exr file", "i", "input", String, ArgParameters, inputExr);
     CliSwitch(generalGid, "Output prefix for output dft files", "p", "prefix", String, ArgParameters, outputPrefix);
     CliSwitch(generalGid, "Disables all the standard output.", "q", "quiet", Bool, ArgParameters, quiet);
+    CliSwitch(generalGid, 
+        "Number of software threads to utilize for computation (default is 16)",
+        "t", "threads", 
+        Uint, ArgParameters, threadCount);
+
     return true;
 }
 
@@ -91,6 +97,14 @@ int main(int argc, char* argv[])
         return (int)ReturnCodes::IoError;
     }
 
+    if (parameters.threadCount == 0)
+    {
+        std::cerr << "Error, thread count must be > 0" << std::endl;
+        return (int)ReturnCodes::BadCmdArgs;
+    }
+
+    noice::DftOptions dftOptions;
+    dftOptions.threadCount = parameters.threadCount;
     noice::TextureComponentHandle dfts[4][2];
     const char* channelNames[4] = { "red", "green", "blue", "alpha" };
     const char* componentName[2] = { "intensity", "direction" };
@@ -100,7 +114,7 @@ int main(int argc, char* argv[])
         if (!c.valid())
             continue;
 
-        noice::Error dftErr = noice::generateDft(c, dfts[i]);
+        noice::Error dftErr = noice::generateDft(c, dfts[i], dftOptions);
         if (dftErr != noice::Error::Ok)
         {
             std::cerr << "Error generating dft: \"" << noice::getErrorString(dftErr) << "\"" << std::endl;

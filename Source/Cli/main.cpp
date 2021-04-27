@@ -519,6 +519,12 @@ int main(int argc, char* argv[])
         std::cout << "] - " << parameters.outputName << std::endl;
     }
 
+    if (parameters.threadCount == 0)
+    {
+        std::cerr << "Error, thread count must be > 0" << std::endl;
+        return (int)ReturnCodes::BadCmdArgs;
+    }
+
     return (int)work(parameters);
 }
 
