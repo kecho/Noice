@@ -1,5 +1,6 @@
 #include <noice/noice.h>
 #include <ClParser.h>
+#include <sstream>
 #include <iostream>
 #include <string>
 
@@ -10,13 +11,14 @@ enum class ReturnCodes : int
 {
     Success = 0,
     IoError = 1,
-    BadCmdArgs = 2
+    BadCmdArgs = 2,
+    DftError = 3
 };
 
 struct ArgParameters
 {
     const char* inputExr = nullptr;
-    const char* outputPrefix = "";
+    const char* outputPrefix = nullptr;
     bool quiet = false;
     bool printHelp = false;
 };
@@ -34,7 +36,8 @@ bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
     p.bind(generalGid, &object);
     CliSwitch(generalGid, "Print help dialog", "h", "help", Bool, ArgParameters, printHelp);
     CliSwitch(generalGid, "Source input exr file", "i", "input", String, ArgParameters, inputExr);
-    CliSwitch(generalGid, "Disables all the standard output.", "q", "quiet", String, ArgParameters, quiet);
+    CliSwitch(generalGid, "Output prefix for output dft files", "p", "prefix", String, ArgParameters, outputPrefix);
+    CliSwitch(generalGid, "Disables all the standard output.", "q", "quiet", Bool, ArgParameters, quiet);
     return true;
 }
 
@@ -85,11 +88,51 @@ int main(int argc, char* argv[])
     if (err != noice::Error::Ok)
     {
         std::cerr << "Failed to read texture file. Error \"" << getErrorString(err) << "\"" << std::endl;
-        return (int)ReturnCodes::BadCmdArgs;
+        return (int)ReturnCodes::IoError;
     }
 
-    for (auto& c : components)
+    noice::TextureComponentHandle dfts[4][2];
+    const char* channelNames[4] = { "red", "green", "blue", "alpha" };
+    const char* componentName[2] = { "intensity", "direction" };
+    for (int i = 0; i < 4; ++i)
+    {
+        auto& c = components[i];
+        if (!c.valid())
+            continue;
+
+        noice::Error dftErr = noice::generateDft(c, dfts[i]);
+        if (dftErr != noice::Error::Ok)
+        {
+            std::cerr << "Error generating dft: \"" << noice::getErrorString(dftErr) << "\"" << std::endl;
+            return (int)ReturnCodes::DftError;
+        }
+
+        for (int dftC = 0; dftC < 2; ++dftC)
+        {
+            std::stringstream ss;
+            if (parameters.outputPrefix != nullptr)
+                ss << parameters.outputPrefix << ".";
+            ss << "dft." << channelNames[i] << "." << componentName[dftC] << ".exr";
+            std::string filename = ss.str();
+            noice::TextureFileDesc outDesc;
+            outDesc.filename = filename.c_str();
+            outDesc.channels[0] = dfts[i][dftC];
+            noice::Error fileErr = saveTextureToFile(outDesc);
+            if (fileErr != noice::Error::Ok)
+            {
+                std::cerr << "failed writting file " << filename
+                    << " with error \"" << noice::getErrorString(fileErr) << "\"" << std::endl;
+                return (int)ReturnCodes::IoError;
+            }
+            else if (!parameters.quiet)
+            {
+                std::cout << "DFT analysis result: \"" << filename << "\""<< std::endl;
+            }
+            
+        }
+
         deleteComponent(c);
+    }
 
     return (int)ReturnCodes::Success;
 }

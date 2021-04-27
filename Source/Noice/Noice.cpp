@@ -6,6 +6,7 @@
 #include "BlueNoiseGenerator.h"
 #include "WhiteNoiseGenerator.h"
 #include "PerlinNoiseGenerator.h"
+#include "DftGenerator.h"
 #include "ImageStream.h"
 #include <stdio.h>
 
@@ -180,6 +181,31 @@ Error loadTextureFromFile(const char* filename, TextureComponentHandle outputCha
         outputChannels[c] = channels[c].image->asHandle();
     }
     return ret;
+}
+
+Error generateDft (TextureComponentHandle componentInput, TextureComponentHandle outputHandles[2])
+{
+    if (!componentInput.valid())
+        return Error::HandleIsNull;
+
+    Image* inputTexture = Image::get(componentInput);
+    Image* outputTextures[2] = { nullptr, nullptr };
+    for (int i = 0; i < 2; ++i)
+    {
+        auto& outputHandle = outputHandles[i];
+        if (!outputHandle.valid())
+        {
+            TextureComponentDesc desc;
+            desc.width  = inputTexture->width();
+            desc.height = inputTexture->height();
+            desc.depth  = inputTexture->depth();
+            outputHandle = createTextureComponent(desc);
+        }
+
+        outputTextures[i] = Image::get(outputHandle);
+    }
+
+    return dftGenerator(*inputTexture, outputTextures);
 }
 
 float* getPixels(TextureComponentHandle component)
