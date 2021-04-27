@@ -1,8 +1,6 @@
 #include "CliParseTests.h"
-#include "Cli/ClTokenizer.h"
-#include "Cli/ClTokenizer.cpp"
-#include "Cli/ClParser.h"
-#include "Cli/ClParser.cpp"
+#include <ClTokenizer.h>
+#include <ClParser.h>
 #include <vector>
 
 namespace noice

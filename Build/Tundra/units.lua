@@ -8,6 +8,7 @@ local SourceDir = "Source";
 
 local LibIncludes = {
     SourceDir.."/Noice/Public/",
+    SourceDir.."/Utils/",
     {
         "External/OpenEXR/include/OpenEXR",
         Config = { "win64-msvc-*" }
@@ -58,11 +59,25 @@ StaticLibrary {
 
 Default("noicelib")
 
+StaticLibrary {
+    Name = "noiceutils",
+    Pass = "BuildCode",
+    Sources = {
+        Glob {
+            Dir = SourceDir.."/Utils",
+            Extensions = { ".cpp", ".h", ".hpp" },
+            Recursive =  true
+        }
+    }
+}
+
+Default("noiceutils")
+
 Program {
     Name = "noice",
     Pass = "BuildCode",
     Includes = LibIncludes,
-    Depends = { "noicelib" },
+    Depends = { "noicelib", "noiceutils" },
     Libs = { Libs },
     Sources = {
         Glob {
@@ -76,10 +91,27 @@ Program {
 Default("noice")
 
 Program {
-    Name = "noice_tests",
+    Name = "noice-dft",
+    Pass = "BuildCode",
+    Includes = { LibIncludes },
+    Depends = { "noicelib", "noiceutils" },
+    Libs = { Libs },
+    Sources = {
+        Glob {
+            Dir = SourceDir.."/Dft",
+            Extensions = { ".cpp", ".h" },
+            Recursive = true
+        }
+    }
+}
+
+Default("noice-dft")
+
+Program {
+    Name = "noice-tests",
     Pass = "BuildCode",
     Includes = { LibIncludes, SourceDir },
-    Depends = { "noicelib" },
+    Depends = { "noicelib", "noiceutils" },
     Libs = { Libs },
     Sources = {
         Glob {
@@ -90,4 +122,4 @@ Program {
     }
 }
 
-Default("noice_tests")
+Default("noice-tests")

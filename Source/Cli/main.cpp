@@ -1,7 +1,6 @@
 #include <noice/noice.h>
-#include "ClParser.h"
+#include <ClParser.h>
 #include <iostream>
-
 
 namespace
 {
