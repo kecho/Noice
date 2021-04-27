@@ -139,19 +139,11 @@ void printExample()
 {
     std::cout << "Usage: noice [-flag|--name=value|-flag=value]*  " << std::endl;
     std::cout << "Example that generates blue noise on red channel and white on green: " << std::endl;
-    std::cout << "noice -W 256 -cR -n blue -cG -n white -o output.exr" << std::endl << std::endl;
+    std::cout << "noice -d 256 -cR -n blue -cG -n white -o output.exr" << std::endl << std::endl;
 }
 
 bool prepareCliSchema(noice::ClParser& p, ArgParameters& object)
 {
-    #define CliSwitch(id, desc, sn, ln, tp, st, mem) \
-        if (!p.addParam(id, ClParser::ParamData(desc, sn, ln, CliParamType::tp, offsetof(st, mem))))\
-        { std::cerr << "Found duplicate schema name :" << sn << " " << ln << std::endl; return false; }
-
-    #define CliSwitchAction(id, desc, sn, ln, tp, st, mem, lst, lmbda) \
-        if (!p.addParam(id, ClParser::ParamData(desc, sn, ln, CliParamType::tp, offsetof(st, mem), lst, lmbda)))\
-        { std::cerr << "Found duplicate schema name :" << sn << " " << ln << std::endl; return false; }
-
     using namespace noice;
     ArgParameters* objectPtr = &object;
     ClParser::GroupId generalGid = p.createGroup("General", "General parameters:");

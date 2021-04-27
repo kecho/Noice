@@ -8,6 +8,21 @@
 #include <iostream>
 #include "ClTokenizer.h"
 
+//Helper macros
+//In order to use them:
+// 1) Have a noice::ClParser p named as p in the scope.
+// 2) Put these inside a function that returns a bool
+// 3) you must include iostream (because of std::cerr)
+// 4) do a using namespace noice at the top of the function
+#define CliSwitch(id, desc, sn, ln, tp, st, mem) \
+    if (!p.addParam(id, ClParser::ParamData(desc, sn, ln, CliParamType::tp, offsetof(st, mem))))\
+    { std::cerr << "Found duplicate schema name :" << sn << " " << ln << std::endl; return false; }
+
+#define CliSwitchAction(id, desc, sn, ln, tp, st, mem, lst, lmbda) \
+    if (!p.addParam(id, ClParser::ParamData(desc, sn, ln, CliParamType::tp, offsetof(st, mem), lst, lmbda)))\
+    { std::cerr << "Found duplicate schema name :" << sn << " " << ln << std::endl; return false; }
+
+
 namespace noice
 {
 
